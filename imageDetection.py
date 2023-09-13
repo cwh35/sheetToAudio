@@ -1,10 +1,14 @@
 import cv2 as cv
+import os
 from skimage.io import imread
 from skimage.transform import resize
 from skimage.feature import hog 
 from skimage import exposure
+from glob import glob
 import matplotlib.pyplot as plt
+import numpy as np
 
+"""
 cam_port = 1
 cam = cv.VideoCapture(cam_port)
 
@@ -15,22 +19,29 @@ if result:
     cv.imwrite("Capture Test.png", image)
 else:
     print("Error: No image detected")
-
+"""
+directory = "templates"
+count = 1
+img = imread("templates/3_4 time signature.png")
+new_img = resize(img, (128*4, 64*4))
+if len(new_img.shape) == 3:
+    fd, hog_img = hog(new_img, orientations=9, pixels_per_cell=(8,8), cells_per_block=(2,2), visualize=True, channel_axis=-1)
+    plt.axis("off")
+    plt.imshow(hog_img, cmap="gray")
+    plt.savefig("template_features_output/feature {}.png".format(count))
+else:
+    fd, hog_img = hog(new_img, orientations=9, pixels_per_cell=(8,8), cells_per_block=(2,2), visualize=True)
+    plt.axis("off")
+    plt.imshow(hog_img, cmap="gray")
+    plt.savefig("template_features_output/feature {}.png".format(count))
+count += 1
 # testing HOG using skimage library
 
-img = imread('templates/flat.png')
+"""    
 plt.axis("off")
 plt.imshow(img)
+#plt.show()
 print(img.shape)
-
+"""
 # resize the image
-new_img = resize(img, (128*4), (64*4))
-plt.axis("off")
-plt.imshow(new_img)
-print(new_img.shape)
-
 # create/visualize HOG features
-fd, hog_img = hog(new_img, orientations=9, pixels_per_cell=(8,8), cells_per_block=(2,2), visualize=True,multichannel=True)
-plt.axis("off")
-plt.imshow(hog_img, cmap="gray")
-plt.show()
