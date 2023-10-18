@@ -1,0 +1,33 @@
+Used Harris Corner Detection to grab all corners of the different templates and objects within the music sheet
+Cannot use Harris Corner Detection by itself to feature match *compatibility issues
+It outputs coordinates, and you can't really compare coordinates 
+Brute-Force Matcher takes the descriptor of one object (the template) and matches it all of the features in the second set (music sheet)
+This uses Hamming distance as the measurement and it returns the closest object to the template
+hamming distance = the number of positions at which the corresponding symbols are different.
+match() function is used to return the best match
+detectAndCompute() gets the keypoints and descriptors
+keypoints = spatial locations or points that stand out in an image
+ORB least accurate 
+ORB wrongly identified objects or didn't identify them at all
+ORB identified one note correctly
+
+SIFT correctly matched some notes
+SIFT matched too much -> too many similar features and not enough features for each template
+
+distance = distance between descriptors, the lower the distance, the better it is
+Uses Lowe's ratio test -> ratio of the distance of the nearest neighbor to the point to the distance of the
+next nearest neighbor to the point
+
+FLANN -> Fast Library for Approximate Nearest Neighbor
+most accurate results
+shows all features that have been pulled from the training image
+shows the matches that it found
+had pretty good accuracy, but it still confused some features with others
+identified same types of notes but on different lines (ex. identified half notes that were placed on spaces)
+
+for all testing
+got errors with K nearest neighbor
+got "Unknown C++ exception from OpenCV Code"
+
+SIFT generates high-dimensional feature vectors for each keypoint, so thats why FLANN is more efficient
+ORB is faster and computationally less expensive, but not as distinct and robust
