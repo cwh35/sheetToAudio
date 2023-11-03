@@ -26,13 +26,15 @@ else:
 # SIFT w/ FLANN based matcher
 templateDirectory = "templates"
 sheetDirectory = "sheets"
-outputDirectory = "results/siftWithFLANNResults"
+outputDirectory = "results/siftResults"
 
 # Mapping of template filenames to hexadecimal values
-template_to_hex = {
+timeSignatureDict = {
     "24_timesignature.PNG": 0x24,
     "34_timesignature.PNG": 0x34,
     "44_timesignature.PNG": 0x44,
+}
+tempoDict = {
     "40_tempo.PNG": 0x28,
     "50_tempo.PNG": 0x32,
     "60_tempo.PNG": 0x3C,
@@ -50,6 +52,31 @@ template_to_hex = {
     "180_tempo.PNG": 0xB4,
     "190_tempo.PNG": 0xBE,
     "200_tempo.PNG": 0xC8,
+}
+keySignatureDict = {
+    "cmajor": 0x0,
+    "flat_f.PNG": 0x1,
+    "flat_bflt.PNG": 0x2,
+    "flat_eflt.PNG": 0x3,
+    "flat_aflt.PNG": 0x4,
+    "flat_dflt.PNG": 0x5,
+    "flat_gflt.PNG": 0x6,
+    "flat_cflt.PNG": 0x7,
+    "sharp_g.PNG": 0x8,
+    "sharp_d.PNG": 0x9,
+    "sharp_a.PNG": 0xA,
+    "sharp_e.PNG": 0xB,
+    "sharp_b.PNG": 0xC,
+    "sharp_fshrp.PNG": 0xD,
+    "sharp_cshrp.PNG": 0xE,
+}
+dynamicsDict = {
+    "forte.PNG": 0x0,
+    "fortissimo.PNG": 0x1,
+    "piano.PNG": 0x2,
+    "pianissimo.PNG": 0x3,
+}
+notesAndRestsDict = {
     "quarternote_lowc.PNG": 0x00,
     "quarternote_lowd.PNG": 0x10,
     "quarternote_lowe.PNG": 0x20,
@@ -130,13 +157,14 @@ template_to_hex = {
     "wholerest.PNG": 0xF7,
     "eighthrest.PNG": 0xF8,
     "sixteenthrest.PNG": 0xF9,
-    "forte.PNG": 0x0,
-    "fortissimo.PNG": 0x1,
-    "piano.PNG": 0x2,
-    "pianissimo.PNG": 0x3,
 }
 
+dict_list = [timeSignatureDict, tempoDict, keySignatureDict, dynamicsDict, notesAndRestsDict]
+
+matchedFiles = [] # To store templates that were recognized in the music sheet
+
 hex_values = []  # Array to store hexadecimal values
+
 
 # Store the good matches here
 good = []
@@ -156,8 +184,9 @@ for sheetFilename in os.listdir(sheetDirectory):
         min_val, max_val, min_loc, max_loc = cv.minMaxLoc(res)
 
         # threshold to filter valid matches
-        threshold = 0.8
+        threshold = 0.9
         if max_val > threshold:
+            #print(max_val, " ", templateFilename)
             # Define the region of interest (ROI) around the max correlation location
             h, w = template.shape
             top_left = max_loc  # This is the top left point of the match
@@ -168,6 +197,12 @@ for sheetFilename in os.listdir(sheetDirectory):
             sift = cv.SIFT_create()
             kp1, des1 = sift.detectAndCompute(template, None)
             kp2, des2 = sift.detectAndCompute(roi, None)
+
+            # # SURF with FLANN matcher on ROI
+            # surf = cv.xfeatures2d.SURF_create()
+            # kp1, des1 = surf.detectAndCompute(template, None)
+            # kp2, des2 = surf.detectAndCompute(roi, None)
+
 
             # Check the number of keypoints and adjust k accordingly
             min_keypoints = min(len(kp1), len(kp2))
@@ -199,16 +234,39 @@ for sheetFilename in os.listdir(sheetDirectory):
                                 matchesMask=matchesMask,
                                 flags=cv.DrawMatchesFlags_DEFAULT)
                 
-                matchingResult = cv.drawMatchesKnn(template, kp1, roi, kp2, matches, None, **draw_params)
+                # Concatenate template and roi horizontally
+                concatenated_image = cv.hconcat([template, roi])
 
-                # Save the plot as an image
+                # Get the dimensions of the template
+                h_template, w_template = template.shape
+
+                # Draw a vertical line between the images
+                cv.line(concatenated_image, (w_template, 0), (w_template, h_template), (0, 0, 255), 5)
+
+                # Save the concatenated image
                 outputFilename = f"{sheetFilename}_{templateFilename}"
                 outputPath = os.path.join(outputDirectory, outputFilename)
-                cv.imwrite(outputPath, matchingResult)
+                cv.imwrite(outputPath, concatenated_image)
+
+                
+                #matchingResult = cv.drawMatchesKnn(template, kp1, roi, kp2, matches, None, **draw_params)
+                
+                # # Save the plot as an image
+                # outputFilename = f"{sheetFilename}_{templateFilename}"
+                # outputPath = os.path.join(outputDirectory, outputFilename)
+                # cv.imwrite(outputPath, matchingResult)
+
+
+                matchedFiles.append(templateFilename)
 
                 # Store the hexadecimal value corresponding to the matched template
-                hex_value = template_to_hex.get(templateFilename)
+                hex_value = None
+                for dictionary in dict_list:
+                    hex_value = dictionary.get(templateFilename)
+                    if hex_value is not None:
+                        break
                 if hex_value is not None:
                     hex_values.append(hex_value)
     
 print(hex_values)
+#print(matchedFiles)
