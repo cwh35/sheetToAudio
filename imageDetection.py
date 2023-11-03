@@ -23,10 +23,9 @@ else:
     print("Error: No image detected")
 """
 
-# SIFT w/ FLANN based matcher
 templateDirectory = "templates"
 sheetDirectory = "sheets"
-outputDirectory = "results/siftResults"
+outputDirectory = "results"
 
 # Mapping of template filenames to hexadecimal values
 timeSignatureDict = {
@@ -122,36 +121,6 @@ notesAndRestsDict = {
     "wholenote_higha.PNG": 0xC2,
     "wholenote_highb.PNG": 0xD2,
     "wholenote_highc.PNG": 0xE2,
-    "eighthnote_lowc.PNG": 0x03,
-    "eighthnote_lowd.PNG": 0x13,
-    "eighthnote_lowe.PNG": 0x23,
-    "eighthnote_lowf.PNG": 0x33,
-    "eighthnote_lowg.PNG": 0x43,
-    "eighthnote_lowa.PNG": 0x53,
-    "eighthnote_lowb.PNG": 0x63,
-    "eighthnote_middlec.PNG": 0x73,
-    "eighthnote_highd.PNG": 0x83,
-    "eighthnote_highe.PNG": 0x93,
-    "eighthnote_highf.PNG": 0xA3,
-    "eighthnote_highg.PNG": 0xB3,
-    "eighthnote_higha.PNG": 0xC3,
-    "eighthnote_highb.PNG": 0xD3,
-    "eighthnote_highc.PNG": 0xE3,
-    "sixteenthnote_lowc.PNG": 0x04,
-    "sixteenthnote_lowd.PNG": 0x14,
-    "sixteenthnote_lowe.PNG": 0x24,
-    "sixteenthnote_lowf.PNG": 0x34,
-    "sixteenthnote_lowg.PNG": 0x44,
-    "sixteenthnote_lowa.PNG": 0x54,
-    "sixteenthnote_lowb.PNG": 0x64,
-    "sixteenthnote_middlec.PNG": 0x74,
-    "sixteenthnote_highd.PNG": 0x84,
-    "sixteenthnote_highe.PNG": 0x94,
-    "sixteenthnote_highf.PNG": 0xA4,
-    "sixteenthnote_highg.PNG": 0xB4,
-    "sixteenthnote_higha.PNG": 0xC4,
-    "sixteenthnote_highb.PNG": 0xD4,
-    "sixteenthnote_highc.PNG": 0xE4,
     "quarterrest.PNG": 0xF5,
     "halfrest.PNG": 0xF6,
     "wholerest.PNG": 0xF7,
@@ -165,9 +134,12 @@ matchedFiles = [] # To store templates that were recognized in the music sheet
 
 hex_values = []  # Array to store hexadecimal values
 
+# Create a dictionary to store the highest correlation value for each ROI
+roi_dict = {}
 
-# Store the good matches here
-good = []
+def are_nearby(box1, box2, tolerance):
+    return abs(box1[0][0] - box2[0][0]) <= tolerance and abs(box1[0][1] - box2[0][1]) <= tolerance
+
 # Loop through the music sheets
 for sheetFilename in os.listdir(sheetDirectory):
     f = os.path.join(sheetDirectory, sheetFilename)
@@ -186,87 +158,51 @@ for sheetFilename in os.listdir(sheetDirectory):
         # threshold to filter valid matches
         threshold = 0.9
         if max_val > threshold:
-            #print(max_val, " ", templateFilename)
-            # Define the region of interest (ROI) around the max correlation location
             h, w = template.shape
             top_left = max_loc  # This is the top left point of the match
             bottom_right = (top_left[0] + w, top_left[1] + h)
             roi = musicSheet[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]
 
-             # SIFT with FLANN matcher on ROI
-            sift = cv.SIFT_create()
-            kp1, des1 = sift.detectAndCompute(template, None)
-            kp2, des2 = sift.detectAndCompute(roi, None)
-
-            # # SURF with FLANN matcher on ROI
-            # surf = cv.xfeatures2d.SURF_create()
-            # kp1, des1 = surf.detectAndCompute(template, None)
-            # kp2, des2 = surf.detectAndCompute(roi, None)
-
-
-            # Check the number of keypoints and adjust k accordingly
-            min_keypoints = min(len(kp1), len(kp2))
-            k_value = min(2, min_keypoints)  # Ensure k is at most 2, but not more than the number of keypoints
-
-            if k_value < 2:
-                print(f"Warning: Only {min_keypoints} keypoints found. Adjusting k to {k_value}")
-
-            if k_value > 0:
-                # KD-Tree (nearest neighbor searches)
-                FLANN_INDEX_KDTREE = 1
-                index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=7)
-                search_params = dict(checks=75)  # checks = # of times to check consistency
-                # match the key points
-                flann = cv.FlannBasedMatcher(index_params, search_params)
-                matches = flann.knnMatch(des1, des2, k=k_value)  # Use adjusted k_value
-
-                matchesMask = [[0, 0] for i in range(len(matches))]
-                if k_value == 2:
-                    for i, (m, n) in enumerate(matches):
-                        if m.distance < 0.7 * n.distance:
-                            matchesMask[i] = [1, 0]
-                else:
-                    for i, m in enumerate(matches):
-                        matchesMask[i] = [1, 0]  # If k_value is 1, keep all matches
-
-                draw_params = dict(matchColor=(0, 255, 0),
-                                singlePointColor=(255, 0, 0),
-                                matchesMask=matchesMask,
-                                flags=cv.DrawMatchesFlags_DEFAULT)
-                
-                # Concatenate template and roi horizontally
-                concatenated_image = cv.hconcat([template, roi])
-
-                # Get the dimensions of the template
-                h_template, w_template = template.shape
-
-                # Draw a vertical line between the images
-                cv.line(concatenated_image, (w_template, 0), (w_template, h_template), (0, 0, 255), 5)
-
-                # Save the concatenated image
-                outputFilename = f"{sheetFilename}_{templateFilename}"
-                outputPath = os.path.join(outputDirectory, outputFilename)
-                cv.imwrite(outputPath, concatenated_image)
-
-                
-                #matchingResult = cv.drawMatchesKnn(template, kp1, roi, kp2, matches, None, **draw_params)
-                
-                # # Save the plot as an image
-                # outputFilename = f"{sheetFilename}_{templateFilename}"
-                # outputPath = os.path.join(outputDirectory, outputFilename)
-                # cv.imwrite(outputPath, matchingResult)
-
-
-                matchedFiles.append(templateFilename)
-
-                # Store the hexadecimal value corresponding to the matched template
-                hex_value = None
-                for dictionary in dict_list:
-                    hex_value = dictionary.get(templateFilename)
-                    if hex_value is not None:
+            # Check each existing ROI to see if this one is nearby
+            for existing_roi, data in roi_dict.items():
+                if are_nearby(existing_roi, (top_left, bottom_right), tolerance=25):  # assuming a tolerance of 15 pixels
+                    # If the new match has a higher correlation value, update the existing ROI data
+                    if max_val > data['max_val']:
+                        data['max_val'] = max_val
+                        data['templateFilename'] = templateFilename
                         break
+            else:
+                # If this ROI doesn't match any existing ROI, add it as a new entry
+                roi_dict[(top_left, bottom_right)] = {'max_val': max_val, 'templateFilename': templateFilename, 'roi': roi}
+   
+            # Concatenate template and roi horizontally
+            concatenated_image = cv.hconcat([template, roi])
+
+            # Get the dimensions of the template
+            h_template, w_template = template.shape
+
+            # Draw a vertical line between the images
+            cv.line(concatenated_image, (w_template, 0), (w_template, h_template), (0, 0, 255), 4)
+
+            # Save the concatenated image
+            outputFilename = f"{sheetFilename}_{templateFilename}"
+            outputPath = os.path.join(outputDirectory, outputFilename)
+            cv.imwrite(outputPath, concatenated_image)
+
+            matchedFiles.append(templateFilename)
+
+            # Store the hexadecimal value corresponding to the matched template
+            hex_value = None
+            for dictionary in dict_list:
+                hex_value = dictionary.get(templateFilename)
                 if hex_value is not None:
-                    hex_values.append(hex_value)
+                    break
+            if hex_value is not None:
+                hex_values.append(hex_value)
     
-print(hex_values)
-#print(matchedFiles)
+count = 1
+# Now, roi_dict contains the highest correlation value and corresponding template for each ROI
+for roi_id, data in roi_dict.items():
+    print(f"ROI: {roi_id}, Max Val: {data['max_val']}, Template: {data['templateFilename']}")
+    print(count)
+    count +=1
