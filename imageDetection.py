@@ -130,15 +130,18 @@ notesAndRestsDict = {
 
 dict_list = [timeSignatureDict, tempoDict, keySignatureDict, dynamicsDict, notesAndRestsDict]
 
-matchedFiles = [] # To store templates that were recognized in the music sheet
+# Array to store hexadecimal values
+hex_values = []
 
-hex_values = []  # Array to store hexadecimal values
-
-# Create a dictionary to store the highest correlation value for each ROI
-roi_dict = {}
+def get_center(box):
+    return ((box[0][0] + box[1][0]) / 2, (box[0][1] + box[1][1]) / 2)
 
 def are_nearby(box1, box2, tolerance):
-    return abs(box1[0][0] - box2[0][0]) <= tolerance and abs(box1[0][1] - box2[0][1]) <= tolerance
+    center1 = get_center(box1)
+    center2 = get_center(box2)
+    return abs(center1[0] - center2[0]) <= tolerance and abs(center1[1] - center2[1]) <= tolerance
+
+all_matches = []
 
 # Loop through the music sheets
 for sheetFilename in os.listdir(sheetDirectory):
@@ -161,48 +164,57 @@ for sheetFilename in os.listdir(sheetDirectory):
             h, w = template.shape
             top_left = max_loc  # This is the top left point of the match
             bottom_right = (top_left[0] + w, top_left[1] + h)
-            roi = musicSheet[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]
 
-            # Check each existing ROI to see if this one is nearby
-            for existing_roi, data in roi_dict.items():
-                if are_nearby(existing_roi, (top_left, bottom_right), tolerance=25):  # assuming a tolerance of 15 pixels
-                    # If the new match has a higher correlation value, update the existing ROI data
-                    if max_val > data['max_val']:
-                        data['max_val'] = max_val
-                        data['templateFilename'] = templateFilename
-                        break
-            else:
-                # If this ROI doesn't match any existing ROI, add it as a new entry
-                roi_dict[(top_left, bottom_right)] = {'max_val': max_val, 'templateFilename': templateFilename, 'roi': roi}
-   
-            # Concatenate template and roi horizontally
-            concatenated_image = cv.hconcat([template, roi])
+            all_matches.append({'ROI': (top_left, bottom_right), 'max_val': max_val, 'templateFilename': templateFilename})
 
-            # Get the dimensions of the template
-            h_template, w_template = template.shape
+groups = []
+for match in all_matches:
+    placed = False
+    for group in groups:
+        for existing_match in group:
+            if are_nearby(match['ROI'], existing_match['ROI'], tolerance=20):
+                group.append(match)
+                placed = True
+                break
+        if placed:
+            break
+    if not placed:
+        groups.append([match])
 
-            # Draw a vertical line between the images
-            cv.line(concatenated_image, (w_template, 0), (w_template, h_template), (0, 0, 255), 4)
+for group in groups:
+    max_match = max(group, key=lambda x: x['max_val'])
 
-            # Save the concatenated image
-            outputFilename = f"{sheetFilename}_{templateFilename}"
-            outputPath = os.path.join(outputDirectory, outputFilename)
-            cv.imwrite(outputPath, concatenated_image)
-
-            matchedFiles.append(templateFilename)
-
-            # Store the hexadecimal value corresponding to the matched template
-            hex_value = None
-            for dictionary in dict_list:
-                hex_value = dictionary.get(templateFilename)
-                if hex_value is not None:
-                    break
-            if hex_value is not None:
-                hex_values.append(hex_value)
+    # Extracting information from max_match
+    top_left, bottom_right = max_match['ROI']
+    max_val = max_match['max_val']
+    templateFilename = max_match['templateFilename']
     
-count = 1
-# Now, roi_dict contains the highest correlation value and corresponding template for each ROI
-for roi_id, data in roi_dict.items():
-    print(f"ROI: {roi_id}, Max Val: {data['max_val']}, Template: {data['templateFilename']}")
-    print(count)
-    count +=1
+    # Load the template image
+    template = cv.imread(os.path.join(templateDirectory, templateFilename), cv.IMREAD_GRAYSCALE)
+    
+    # Get region of interest from musicSheet
+    roi = musicSheet[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]
+    
+    # Make sure the images have the same height before concatenating
+    h = max(template.shape[0], roi.shape[0])
+    template = cv.copyMakeBorder(template, 0, h - template.shape[0], 0, 0, cv.BORDER_CONSTANT, value=[0,0,0])
+    roi = cv.copyMakeBorder(roi, 0, h - roi.shape[0], 0, 0, cv.BORDER_CONSTANT, value=[0,0,0])
+    
+    # Concatenate the template and roi images horizontally
+    concatenated_image = cv.hconcat([template, roi])
+    
+    # Vertical line to separate template and matched object
+    line_position = template.shape[1]
+    cv.line(concatenated_image, (line_position, 0), (line_position, concatenated_image.shape[0]), (0, 0, 0), 4)
+    
+    # Save image
+    outputFilename = f"{templateFilename}_max_match.png"
+    outputPath = os.path.join(outputDirectory, outputFilename)
+    cv.imwrite(outputPath, concatenated_image)
+
+# count = 1
+# # Now, roi_dict contains the highest correlation value and corresponding template for each ROI
+# for roi_id, data in roi_dict.items():
+#     print(f"ROI: {roi_id}, Max Val: {data['max_val']}, Template: {data['templateFilename']}")
+#     print(count)
+#     count +=1
