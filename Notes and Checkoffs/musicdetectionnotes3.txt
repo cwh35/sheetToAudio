@@ -1,0 +1,4 @@
+harris -> to get features (need more features from the notes)
+sift -> to get descriptors
+
+indices -> use numpy to visualize
