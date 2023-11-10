@@ -2,6 +2,7 @@ import cv2 as cv
 import os
 import numpy as np
 from pprint import pprint
+from MTM import matchTemplates
 
 """
 cam_port = 1
@@ -139,7 +140,7 @@ def split_image(image, shift_pixels=0, pixelDivision = 170):
     # Get dimensions of the image
     height, width = image.shape[:2]
 
-    # Check if the height is divisible by 160 (height of one line of music)
+    # Check if the height is divisible by pixelDivision (height of one line of music)
     if height % pixelDivision != 0:
         raise ValueError("The height of the image is not divisible by 160 pixels.")
 
@@ -176,108 +177,78 @@ def get_hex_value(template_filename):
     # If the template filename is not found in any dictionary, handle the case (e.g., return None or raise an error)
     return None  # or raise ValueError(f"No hex value found for template: {template_filename}")
 
-
 all_matches = []
+listTemplate = []
+
+# Load templates into listTemplate
+for filename in os.listdir(templateDirectory):
+    template_img = cv.imread(os.path.join(templateDirectory, filename), cv.IMREAD_GRAYSCALE)
+    listTemplate.append((filename.split('.')[0], template_img))
 
 # Loop through the music sheets
 for sheetFilename in os.listdir(sheetDirectory):
     f = os.path.join(sheetDirectory, sheetFilename)
-    musicSheet = cv.imread(f ,cv.IMREAD_GRAYSCALE)  # trainImage
+    musicSheet = cv.imread(f, cv.IMREAD_GRAYSCALE)
 
     # Split the music sheet into lines
     lines_of_music = split_image(musicSheet)
 
     # Loop through each line of music
     for idx, line in enumerate(lines_of_music):
-        # Loop through the templates
-        for templateFilename in os.listdir(templateDirectory):
-            file = os.path.join(templateDirectory, templateFilename)
-            template = cv.imread(file ,cv.IMREAD_GRAYSCALE)  # queryImage
+        # Get matches using matchTemplates
+        hits = matchTemplates(listTemplate,
+                              line,
+                              score_threshold=0.93,
+                              searchBox=(0, 0, 3000, 750),
+                              method=cv.TM_CCOEFF_NORMED,
+                              maxOverlap=0.2)
+        
+        pprint(hits)
 
-            # Cross-correlation between templates and music sheet
-            res = cv.matchTemplate(line, template, cv.TM_CCOEFF_NORMED)
-            # Get the min and max correlation value as well as locations of the matched points
-            min_val, max_val, min_loc, max_loc = cv.minMaxLoc(res)
+        # Process each hit
+        for hit in hits:
+            # Assuming each hit is a tuple in the form (template_name, score, top_left, bottom_right)
+            template_name, score, top_left, bottom_right = hit
 
-            # threshold to filter valid matches
-            threshold = 0.94
-            if max_val > threshold:
-                h, w = template.shape
-                top_left = max_loc
-                bottom_right = (top_left[0] + w, top_left[1] + h)
+            # Construct match dictionary
+            match_dict = {
+                'ROI': (top_left, bottom_right),
+                'max_val': score,
+                'templateFilename': template_name,
+                'sheetFilename': sheetFilename,
+                'lineIndex': idx
+            }
+            # Add to all_matches
+            all_matches.append(match_dict)
 
-                all_matches.append({'ROI': (top_left, bottom_right),
-                                    'max_val': max_val,
-                                    'templateFilename': templateFilename,
-                                    'sheetFilename': sheetFilename,
-                                    'lineIndex': idx})
-pprint(all_matches)
+# Grouping matches
 groups = []
 for match in all_matches:
     placed = False
     for group in groups:
-        for existing_match in group:
-            if are_nearby(match['ROI'], existing_match['ROI'], tolerance=20):
-                group.append(match)
-                placed = True
-                break
-        if placed:
+        if any(are_nearby(match['ROI'], existing_match['ROI'], tolerance=20) for existing_match in group):
+            group.append(match)
+            placed = True
             break
     if not placed:
         groups.append([match])
 
+# Processing groups to select the best match
 best_matches = []
-
 for group in groups:
     max_match = max(group, key=lambda x: x['max_val'])
     best_matches.append(max_match)
 
-    # Extracting information from max_match
-    top_left, bottom_right = max_match['ROI']
-    max_val = max_match['max_val']
-    templateFilename = max_match['templateFilename']
-    sheetFilename = max_match['sheetFilename']
-    
-    # Load the template image
-    template = cv.imread(os.path.join(templateDirectory, templateFilename), cv.IMREAD_GRAYSCALE)
-    
-    # Get region of interest from musicSheet
-    roi = musicSheet[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]
-    
-    # Make sure the images have the same height before concatenating
-    h = max(template.shape[0], roi.shape[0])
-    template = cv.copyMakeBorder(template, 0, h - template.shape[0], 0, 0, cv.BORDER_CONSTANT, value=[0,0,0])
-    roi = cv.copyMakeBorder(roi, 0, h - roi.shape[0], 0, 0, cv.BORDER_CONSTANT, value=[0,0,0])
-    
-    # Concatenate the template and roi images horizontally
-    concatenated_image = cv.hconcat([template, roi])
-    
-    # Vertical line to separate template and matched object
-    line_position = template.shape[1]
-    cv.line(concatenated_image, (line_position, 0), (line_position, concatenated_image.shape[0]), (0, 0, 0), 4)
-    
-    # Save image
-    outputFilename = f"{templateFilename}_{sheetFilename}_match.png"
-    outputPath = os.path.join(outputDirectory, outputFilename)
-    cv.imwrite(outputPath, concatenated_image)
-
-# Now sort these best matches by line number and from left to right
+# Sorting best matches
 sorted_best_matches = sorted(best_matches, key=lambda match: (match['lineIndex'], match['ROI'][0][0]))
 
-# Extract hex values and print template filenames for sorted best matches
-hex_array = [get_hex_value(match['templateFilename']) for match in sorted_best_matches if get_hex_value(match['templateFilename']) is not None]
-
-# Extract hex values for sorted best matches
+# Extracting hex values and printing template filenames
 hex_array = []
 for match in sorted_best_matches:
-    # Get the hex value for the current template filename
     hex_value = get_hex_value(match['templateFilename'])
     if hex_value is not None:
-        # Ensure hex_value is a string in hexadecimal format
         hex_string = hex(hex_value) if isinstance(hex_value, int) else hex_value
         hex_array.append(hex_string)
-        # Print the template filename and its corresponding hex value
         print(f"{match['templateFilename']} - {hex_string}")
     else:
-        # Handle the case where there is no corresponding hex value
         print(f"{match['templateFilename']} - No hex value found")
