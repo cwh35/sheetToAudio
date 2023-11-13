@@ -1,0 +1,11 @@
+Goals:
+- Only identify treble clef, time signature, and tempo once
+- Put key signature (hex value) in between treble clef and tempo
+- Make sure the hex output matches Jack's input (capital letters) 
+	- have it output as a uint8 or char
+- If no dyanimc recognized, take the last one that was identified, or use default (ff)
+- timeSig = 0xXX
+- Tempo = 0xXX
+- KeySig = 0x0X
+
+Everything else is a dynamic or a note/rest
