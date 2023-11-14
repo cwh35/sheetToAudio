@@ -173,7 +173,7 @@ for filename in os.listdir(templateDirectory):
     template_img = cv.imread(os.path.join(templateDirectory, filename))
     template_img = cv.cvtColor(template_img, cv.COLOR_BGR2GRAY)
     listTemplate.append((filename.split('.')[0], template_img))
-sheet = "sheets/Test Sheet-1.png"
+sheet = "sheets/test2.png"
 sheet_img = cv.imread(sheet)
 sheet_img = cv.cvtColor(sheet_img, cv.COLOR_BGR2GRAY)
 
@@ -194,6 +194,7 @@ int_values = sorted_hits['HexValue'].dropna().values
 int_array = np.array(int_values, dtype=int)
 
 #print(int_array)
+#print(sorted_hits)
 
 # Make a copy of sorted_hits for modifications
 modified_hits = sorted_hits.copy()
@@ -205,25 +206,6 @@ clusters = modified_hits.groupby('Cluster')
 modified_output = []
 
 for i, (cluster_id, cluster) in enumerate(clusters):
-    # if i == 0:
-    #     # Check for the presence of any key signature in the first cluster
-    #     if not set(keySignatureDict.keys()).intersection(cluster['TemplateName'].values):
-    #         # Find index to insert the default key signature
-    #         treble_clef_index = cluster[cluster['TemplateName'] == 'trebleclef'].index[0]
-    #         tempo_index = cluster[cluster['TemplateName'].isin(tempoDict.keys())].index[0]
-    #         insert_index = max(treble_clef_index, tempo_index) + 1
-
-    #         # Create a row to insert for the default key signature
-    #         default_key_signature_row = pd.Series({'TemplateName': 'cmajor', 'HexValue': keySignatureDict['cmajor']})
-    #         cluster = pd.concat([cluster.iloc[:insert_index], default_key_signature_row, cluster.iloc[insert_index:]]).reset_index(drop=True)
-
-    #     # Check and insert default dynamics if not present
-    #     if not set(dynamicsDict.keys()).intersection(cluster['TemplateName'].values):
-    #         # Find index to insert the default dynamics
-    #         first_note_index = cluster[cluster['TemplateName'].isin(notesAndRestsDict.keys())].index[0]
-    #         default_dynamics_row = pd.Series({'TemplateName': 'fortissimo', 'HexValue': dynamicsDict['fortissimo']})
-    #         cluster = pd.concat([cluster.iloc[:first_note_index], default_dynamics_row, cluster.iloc[first_note_index:]]).reset_index(drop=True)
-
     # Remove extra treble clefs except for the first cluster
     if i >= 0:
         cluster = cluster[cluster['TemplateName'] != 'trebleclef']
@@ -242,10 +224,6 @@ int_array2 = np.array(int_values2, dtype=int)
 
 print(modified_hits)
 print(int_array2)
-
-# Print the sorted hits
-#print(sorted_hits)
-#print(len(hits))
 
 # # Extract y-coordinates
 # hits['y'] = hits['BBox'].apply(lambda bbox: bbox[1])
