@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 os.environ['LOKY_MAX_CPU_COUNT'] = '4'
 
 
-
 # Mapping of template filenames to hexadecimal values
 timeSignatureDict = {
     "24_timesignature": 0x24,
@@ -174,7 +173,7 @@ for filename in os.listdir(templateDirectory):
     template_img = cv.imread(os.path.join(templateDirectory, filename))
     template_img = cv.cvtColor(template_img, cv.COLOR_BGR2GRAY)
     listTemplate.append((filename.split('.')[0], template_img))
-sheet = "sheets/SampleSheetFourMeasure.png"
+sheet = "sheets/Test Sheet-1.png"
 sheet_img = cv.imread(sheet)
 sheet_img = cv.cvtColor(sheet_img, cv.COLOR_BGR2GRAY)
 
@@ -183,7 +182,7 @@ hits = matchTemplates(listTemplate,
                       score_threshold=0.93,
                       searchBox=(0, 0, 3000, 750),
                       method=cv.TM_CCOEFF_NORMED,
-                      maxOverlap=0.2)
+                      maxOverlap=0.3)
 # Process the hits
 sorted_hits = cluster_and_sort_hits(hits)
 
@@ -194,7 +193,7 @@ sorted_hits['HexValue'] = sorted_hits['TemplateName'].apply(get_hex_value)
 int_values = sorted_hits['HexValue'].dropna().values
 int_array = np.array(int_values, dtype=int)
 
-print(int_array)
+#print(int_array)
 
 # Make a copy of sorted_hits for modifications
 modified_hits = sorted_hits.copy()
@@ -241,14 +240,12 @@ modified_hits['HexValue'] = modified_hits['TemplateName'].apply(get_hex_value)
 int_values2 = modified_hits['HexValue'].dropna().values
 int_array2 = np.array(int_values2, dtype=int)
 
-#print(sorted_hits)
 print(modified_hits)
 print(int_array2)
-#print(modified_hits)
+
 # Print the sorted hits
 #print(sorted_hits)
 #print(len(hits))
-#print(hex_array)
 
 # # Extract y-coordinates
 # hits['y'] = hits['BBox'].apply(lambda bbox: bbox[1])
