@@ -204,7 +204,7 @@ for filename in os.listdir(templateDirectory):
     template_img = cv.imread(os.path.join(templateDirectory, filename))
     template_img = cv.cvtColor(template_img, cv.COLOR_BGR2GRAY)
     listTemplate.append((filename.split('.')[0], template_img))
-sheet = "sheets/Sample Sheet 7.png"
+sheet = "sheets/Sample Sheet 6.png"
 sheet_img = cv.imread(sheet)
 sheet_img = cv.cvtColor(sheet_img, cv.COLOR_BGR2GRAY)
 
@@ -236,59 +236,59 @@ clusters = sorted_hits['Cluster'].unique()
 first_cluster_tempo = None
 first_cluster_time_signature = None
 
-for cluster in clusters:
+for i, cluster in enumerate(clusters):
     # Filter the DataFrame for the current cluster
     cluster_data = sorted_hits[sorted_hits['Cluster'] == cluster]
 
-    # Flags to track if template name belongs to respective dictionary
+    # Flag to track if template name belongs to keySignatureDict
     found_in_keySigDict = False
-    found_in_tempoDict = False
-    found_in_timeSigDict = False
 
-    # Store the first found values of tempo and time signature
-    tempo_in_cluster = None
-    time_signature_in_cluster = None
-
+    # Store the index of the 'trebleclef' row
     trebleclef_index = None
 
     for index, row in cluster_data.iterrows():
         template_name = row['TemplateName']
         
+        # Check if the template name matches any key in keySignatureDict
         if any(key in template_name for key in keySignatureDict):
             found_in_keySigDict = True
-        elif any(key in template_name for key in tempoDict):
-            found_in_tempoDict = True
-            tempo_in_cluster = row['TemplateName']
-        elif any(key in template_name for key in timeSignatureDict):
-            found_in_timeSigDict = True
-            time_signature_in_cluster = row['TemplateName']
         elif template_name == "trebleclef":
             trebleclef_index = index
 
-    if cluster == clusters[0]:
-        first_cluster_tempo = tempo_in_cluster
-        first_cluster_time_signature = time_signature_in_cluster
+    # Insert key signature if not found
+    if not found_in_keySigDict and trebleclef_index is not None:
+        new_row = {'TemplateName': 'cmajor', 'BBox': 'default', 'Score': '1.000000', 'Cluster': cluster, 'HexValue': keySignatureDict.get('cmajor')}
+        sorted_hits = pd.concat([sorted_hits.iloc[:trebleclef_index + 1], pd.DataFrame([new_row]), sorted_hits.iloc[trebleclef_index + 1:]]).reset_index(drop=True)
+        keySig_index = trebleclef_index + 1
+    else:
+        keySig_index = trebleclef_index
 
-    if trebleclef_index is not None:
-        if not found_in_keySigDict:
-            # Insert default key signature
-            key_sig_row = {'TemplateName': 'cmajor', 'BBox': 'Default Key Signature', 'Score': '1.000000', 'Cluster': cluster, 'HexValue': keySignatureDict.get('cmajor')}
-            sorted_hits = pd.concat([sorted_hits.iloc[:trebleclef_index + 1], pd.DataFrame([key_sig_row]), sorted_hits.iloc[trebleclef_index + 1:]]).reset_index(drop=True)
-            trebleclef_index += 1
+    # Insert or carry forward tempo
+    tempo_row = cluster_data[cluster_data['TemplateName'].str.contains("_tempo")]
+    if tempo_row.empty and (i == 0 or first_cluster_tempo is None):
+        first_cluster_tempo = '120_tempo'
+        new_tempo_row = {'TemplateName': first_cluster_tempo, 'BBox': 'default', 'Score': '1.000000', 'Cluster': cluster, 'HexValue': '0x78'}
+        sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 1], pd.DataFrame([new_tempo_row]), sorted_hits.iloc[keySig_index + 1:]]).reset_index(drop=True)
+    elif tempo_row.empty:
+        new_tempo_row = {'TemplateName': first_cluster_tempo, 'BBox': 'default', 'Score': '1.000000', 'Cluster': cluster, 'HexValue': '0x78'}
+        sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 1], pd.DataFrame([new_tempo_row]), sorted_hits.iloc[keySig_index + 1:]]).reset_index(drop=True)
+    elif i == 0:
+        first_cluster_tempo = tempo_row.iloc[0]['TemplateName']
 
-        if not found_in_tempoDict:
-            # Use the tempo from the first cluster if present, else default
-            default_tempo = first_cluster_tempo if first_cluster_tempo else '120_tempo'
-            tempo_row = {'TemplateName': default_tempo, 'BBox': 'Default Tempo', 'Score': '1.000000', 'Cluster': cluster, 'HexValue': tempoDict.get('120_tempo')}
-            sorted_hits = pd.concat([sorted_hits.iloc[:trebleclef_index + 2], pd.DataFrame([tempo_row]), sorted_hits.iloc[trebleclef_index + 2:]]).reset_index(drop=True)
-            trebleclef_index += 1
+    # Insert or carry forward time signature
+    timeSig_row = cluster_data[cluster_data['TemplateName'].str.contains("_timesignature")]
+    if timeSig_row.empty and (i == 0 or first_cluster_time_signature is None):
+        first_cluster_time_signature = '44_timesignature'
+        new_timeSig_row = {'TemplateName': first_cluster_time_signature, 'BBox': 'default', 'Score': '1.000000', 'Cluster': cluster, 'HexValue': '0x44'}
+        sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 2], pd.DataFrame([new_timeSig_row]), sorted_hits.iloc[keySig_index + 2:]]).reset_index(drop=True)
+    elif timeSig_row.empty:
+        new_timeSig_row = {'TemplateName': first_cluster_time_signature, 'BBox': 'default', 'Score': '1.000000', 'Cluster': cluster, 'HexValue': '0x44'}
+        sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 2], pd.DataFrame([new_timeSig_row]), sorted_hits.iloc[keySig_index + 2:]]).reset_index(drop=True)
+    elif i == 0:
+        first_cluster_time_signature = timeSig_row.iloc[0]['TemplateName']
 
-        if not found_in_timeSigDict:
-            # Use the time signature from the first cluster if present, else default
-            default_time_sig = first_cluster_time_signature if first_cluster_time_signature else '44_timesignature'
-            time_sig_row = {'TemplateName': default_time_sig, 'BBox': 'Default Time Signature', 'Score': '1.000000', 'Cluster': cluster, 'HexValue': timeSignatureDict.get('44_timesignature')}
-            sorted_hits = pd.concat([sorted_hits.iloc[:trebleclef_index + 3], pd.DataFrame([time_sig_row]), sorted_hits.iloc[trebleclef_index + 3:]]).reset_index(drop=True)
-
+# After processing all clusters
+sorted_hits.reset_index(drop=True, inplace=True)
 # Convert the 'TemplateName' column to the 'HexValue' column DataFrame
 sorted_hits['HexValue'] = sorted_hits['TemplateName'].apply(get_hex_value)
 
