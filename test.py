@@ -153,11 +153,35 @@ def count_treble_clefs(hits):
     # Counting the number of treble clefs based on the 'TemplateName' column
     return len(hits[hits['TemplateName'] == 'trebleclef'])
 
-def cluster_and_sort_hits(hits, cluster_range=180):  # Increased range
+def remove_signatures_at_line_end(hits):
+    # Initialize an empty list to store the indices to be dropped
+    indices_to_drop = []
+
+    # Iterate over the clusters, except the last one
+    for i in range(len(clusters) - 1):
+        # Get the current cluster and the first entry of the next cluster
+        current_cluster_data = hits[hits['Cluster'] == clusters[i]]
+        next_cluster_first_entry = hits[hits['Cluster'] == clusters[i + 1]].iloc[0]
+
+        # Check if the current cluster ends with a key or time signature
+        if not current_cluster_data.empty:
+            last_entry = current_cluster_data.iloc[-1]
+            if (last_entry['TemplateName'] in keySignatureDict or last_entry['TemplateName'] in timeSignatureDict):
+                # Check if the next cluster starts with a treble clef
+                if next_cluster_first_entry['TemplateName'] == 'trebleclef':
+                    # Mark the index of the last entry for removal
+                    indices_to_drop.append(last_entry.name)
+
+    # Drop the identified indices from the hits DataFrame
+    hits_dropped = hits.drop(indices_to_drop)
+    return hits_dropped.reset_index(drop=True)
+
+
+def cluster_and_sort_hits(hits, cluster_range=180):
     # Count treble clefs to determine the number of clusters
     n_clusters = count_treble_clefs(hits)
 
-    # Handle the case when no treble clefs are detected
+    # If no treble clefs are detected
     if n_clusters == 0:
         print("No treble clefs detected. Clustering cannot be performed.")
         return hits
@@ -204,7 +228,7 @@ for filename in os.listdir(templateDirectory):
     template_img = cv.imread(os.path.join(templateDirectory, filename))
     template_img = cv.cvtColor(template_img, cv.COLOR_BGR2GRAY)
     listTemplate.append((filename.split('.')[0], template_img))
-sheet = "sheets/Sample Sheet 6.png"
+sheet = "sheets/Sample Sheet 7.png"
 sheet_img = cv.imread(sheet)
 sheet_img = cv.cvtColor(sheet_img, cv.COLOR_BGR2GRAY)
 
@@ -217,6 +241,14 @@ hits = matchTemplates(listTemplate,
 # Process the hits
 sorted_hits = cluster_and_sort_hits(hits)
 
+print("Number of initial matches before post-processing:", len(sorted_hits))
+
+# Get each cluster
+clusters = sorted_hits['Cluster'].unique()
+
+# Process the hits to remove signatures at the end of a line
+sorted_hits = remove_signatures_at_line_end(sorted_hits)
+
 # Get mean y-coordinate for each cluster and sort them
 cluster_order = hits.groupby('Cluster')['y'].mean().sort_values().index
 
@@ -228,9 +260,6 @@ sorted_hits['Cluster'] = sorted_hits['Cluster'].map(cluster_mapping)
 
 # Reset the indexing for adding in the default values
 sorted_hits.reset_index(drop=True, inplace=True)
-
-# Get each cluster
-clusters = sorted_hits['Cluster'].unique()
 
 # Variables to store the first cluster's tempo and time signature
 first_cluster_tempo = None
@@ -246,18 +275,25 @@ for i, cluster in enumerate(clusters):
     # Store the index of the 'trebleclef' row
     trebleclef_index = None
 
+    # Iterate through each cluster
     for index, row in cluster_data.iterrows():
+        # Get the current template name
         template_name = row['TemplateName']
         
         # Check if the template name matches any key in keySignatureDict
         if any(key in template_name for key in keySignatureDict):
             found_in_keySigDict = True
         elif template_name == "trebleclef":
+            # Set the index of the treble clef
             trebleclef_index = index
 
     # Insert key signature if not found
     if not found_in_keySigDict and trebleclef_index is not None:
-        new_row = {'TemplateName': 'cmajor', 'BBox': 'default', 'Score': '1.000000', 'Cluster': cluster, 'HexValue': keySignatureDict.get('cmajor')}
+        new_row = {'TemplateName': 'cmajor', 
+                    'BBox': 'Default Key Signature', 
+                    'Score': '1.000000', 
+                    'Cluster': cluster, 
+                    'HexValue': keySignatureDict.get('cmajor')}
         sorted_hits = pd.concat([sorted_hits.iloc[:trebleclef_index + 1], pd.DataFrame([new_row]), sorted_hits.iloc[trebleclef_index + 1:]]).reset_index(drop=True)
         keySig_index = trebleclef_index + 1
     else:
@@ -267,10 +303,18 @@ for i, cluster in enumerate(clusters):
     tempo_row = cluster_data[cluster_data['TemplateName'].str.contains("_tempo")]
     if tempo_row.empty and (i == 0 or first_cluster_tempo is None):
         first_cluster_tempo = '120_tempo'
-        new_tempo_row = {'TemplateName': first_cluster_tempo, 'BBox': 'default', 'Score': '1.000000', 'Cluster': cluster, 'HexValue': '0x78'}
+        new_tempo_row = {'TemplateName': first_cluster_tempo, 
+                         'BBox': 'Default Tempo', 
+                         'Score': '1.000000', 
+                         'Cluster': cluster, 
+                         'HexValue': tempoDict.get('120_tempo')}
         sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 1], pd.DataFrame([new_tempo_row]), sorted_hits.iloc[keySig_index + 1:]]).reset_index(drop=True)
     elif tempo_row.empty:
-        new_tempo_row = {'TemplateName': first_cluster_tempo, 'BBox': 'default', 'Score': '1.000000', 'Cluster': cluster, 'HexValue': '0x78'}
+        new_tempo_row = {'TemplateName': first_cluster_tempo, 
+                         'BBox': 'Original Tempo', 
+                         'Score': '1.000000', 
+                         'Cluster': cluster, 
+                         'HexValue': tempoDict.get('120_tempo')}
         sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 1], pd.DataFrame([new_tempo_row]), sorted_hits.iloc[keySig_index + 1:]]).reset_index(drop=True)
     elif i == 0:
         first_cluster_tempo = tempo_row.iloc[0]['TemplateName']
@@ -279,27 +323,34 @@ for i, cluster in enumerate(clusters):
     timeSig_row = cluster_data[cluster_data['TemplateName'].str.contains("_timesignature")]
     if timeSig_row.empty and (i == 0 or first_cluster_time_signature is None):
         first_cluster_time_signature = '44_timesignature'
-        new_timeSig_row = {'TemplateName': first_cluster_time_signature, 'BBox': 'default', 'Score': '1.000000', 'Cluster': cluster, 'HexValue': '0x44'}
+        new_timeSig_row = {'TemplateName': first_cluster_time_signature, 
+                           'BBox': 'Default Time Signature', 
+                           'Score': '1.000000', 
+                           'Cluster': cluster, 
+                           'HexValue': timeSignatureDict.get('44_timesignature')}
         sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 2], pd.DataFrame([new_timeSig_row]), sorted_hits.iloc[keySig_index + 2:]]).reset_index(drop=True)
     elif timeSig_row.empty:
-        new_timeSig_row = {'TemplateName': first_cluster_time_signature, 'BBox': 'default', 'Score': '1.000000', 'Cluster': cluster, 'HexValue': '0x44'}
+        new_timeSig_row = {'TemplateName': first_cluster_time_signature, 
+                           'BBox': 'Original Time Signature', 
+                           'Score': '1.000000', 
+                           'Cluster': cluster, 
+                           'HexValue': timeSignatureDict.get('44_timesignature')}
         sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 2], pd.DataFrame([new_timeSig_row]), sorted_hits.iloc[keySig_index + 2:]]).reset_index(drop=True)
     elif i == 0:
         first_cluster_time_signature = timeSig_row.iloc[0]['TemplateName']
 
-# After processing all clusters
+# After processing all clusters -> reset the index
 sorted_hits.reset_index(drop=True, inplace=True)
+
 # Convert the 'TemplateName' column to the 'HexValue' column DataFrame
 sorted_hits['HexValue'] = sorted_hits['TemplateName'].apply(get_hex_value)
-
-
 
 # Convert hex values to integers and store in a NumPy array
 int_values = sorted_hits['HexValue'].dropna().values
 int_array = np.array(int_values, dtype=int)
 
 print(sorted_hits)
-print("The number of matches found in the music sheet:", len(sorted_hits))
+print("The number of matches post-processing:", len(sorted_hits))
 print("Corresponding hex values in decimal form: ", int_array)
 
 measures_per_line = []
