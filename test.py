@@ -148,27 +148,35 @@ def count_treble_clefs(hits):
     return len(hits[hits['TemplateName'] == 'trebleclef'])
 
 def remove_signatures_at_line_end(hits):
-    # Initialize an empty list to store the indices to be dropped
     indices_to_drop = []
 
-    # Iterate over the clusters, except the last one
+    # Ensure clusters are sorted
+    clusters = sorted(hits['Cluster'].unique())
+
     for i in range(len(clusters) - 1):
-        # Get the current cluster and the first entry of the next cluster
+        # Get the data for the current cluster
         current_cluster_data = hits[hits['Cluster'] == clusters[i]]
+
+        # Get the first entry of the next cluster
         next_cluster_first_entry = hits[hits['Cluster'] == clusters[i + 1]].iloc[0]
 
-        # Check if the current cluster ends with a key or time signature
-        if not current_cluster_data.empty:
-            last_entry = current_cluster_data.iloc[-1]
-            if (last_entry['TemplateName'] in keySignatureDict or last_entry['TemplateName'] in timeSignatureDict):
-                # Check if the next cluster starts with a treble clef
-                if next_cluster_first_entry['TemplateName'] == 'trebleclef':
-                    # Mark the index of the last entry for removal
-                    indices_to_drop.append(last_entry.name)
+        # Check the last two entries of the current cluster
+        if len(current_cluster_data) >= 2:
+            # Get the last two entries
+            last_entries = current_cluster_data.iloc[-2:]
+
+            # Check if any of these last entries are key or time signatures
+            for _, last_entry in last_entries.iterrows():
+                if last_entry['TemplateName'] in keySignatureDict or \
+                   last_entry['TemplateName'] in timeSignatureDict:
+                    # Check if the next cluster starts with a treble clef
+                    if next_cluster_first_entry['TemplateName'] == 'trebleclef':
+                        # Mark the index of the last entry for removal
+                        indices_to_drop.append(last_entry.name)
 
     # Drop the identified indices from the hits DataFrame
-    hits_dropped = hits.drop(indices_to_drop)
-    return hits_dropped.reset_index(drop=True)
+    hits_dropped = hits.drop(indices_to_drop).reset_index(drop=True)
+    return hits_dropped
 
 
 def cluster_and_sort_hits(hits, cluster_range=180):
@@ -181,8 +189,8 @@ def cluster_and_sort_hits(hits, cluster_range=180):
         return hits
 
     # Extract x and y coordinates for clustering and sorting
-    hits['x'] = hits['BBox'].apply(lambda bbox: bbox[0])
-    hits['y'] = hits['BBox'].apply(lambda bbox: bbox[1])
+    hits['x'] = hits['BBox'].apply(lambda bbox: bbox[0] + bbox[2] // 2)
+    hits['y'] = hits['BBox'].apply(lambda bbox: bbox[1] + bbox[3] // 2)
 
     # Apply KMeans clustering
     kmeans = KMeans(n_clusters=n_clusters, n_init = 15, random_state=0).fit(hits[['y']])
@@ -200,7 +208,20 @@ def cluster_and_sort_hits(hits, cluster_range=180):
         if cluster['y'].max() - cluster['y'].min() > cluster_range:
             print(f"Warning: Cluster {cluster_id} exceeds y-coordinate range of {cluster_range} pixels.")
 
-        cluster = cluster.sort_values(by=['x', 'y'])
+        cluster = cluster.sort_values(by='x')
+
+        # This is for updating the x and y part of the BBox Column
+        # with the new "centered" coordinates
+        for index, row in cluster.iterrows():
+            # Extract the center coordinates
+            x_center, y_center = row['x'], row['y']
+
+            # Extract the original width and height from the BBox
+            _, _, width, height = row['BBox']
+
+            # Update the BBox value in the DataFrame
+            cluster.at[index, 'BBox'] = (x_center, y_center, width, height)
+
         sorted_hits = pd.concat([sorted_hits, cluster])
 
     # Drop the added columns if not needed in the final output
@@ -222,7 +243,7 @@ for filename in os.listdir(templateDirectory):
     template_img = cv.imread(os.path.join(templateDirectory, filename))
     template_img = cv.cvtColor(template_img, cv.COLOR_BGR2GRAY)
     listTemplate.append((filename.split('.')[0], template_img))
-sheet = "sheets/Sample Sheet 3.png"
+sheet = "sheets/Sample Sheet 4.png"
 sheet_img = cv.imread(sheet)
 sheet_img = cv.cvtColor(sheet_img, cv.COLOR_BGR2GRAY)
 
@@ -240,9 +261,6 @@ print("Number of initial matches before post-processing:", len(sorted_hits))
 # Get each cluster (the numbers of them --> ex: 3 lines should have clusters 0, 1, 2)
 clusters = sorted(sorted_hits['Cluster'].unique())
 
-# Process the hits to remove signatures at the end of a line
-sorted_hits = remove_signatures_at_line_end(sorted_hits)
-
 # Get mean y-coordinate for each cluster and sort them
 cluster_order = hits.groupby('Cluster')['y'].mean().sort_values().index
 
@@ -251,6 +269,8 @@ cluster_mapping = {old_id: new_id for new_id, old_id in enumerate(cluster_order)
 
 # Apply mapping
 sorted_hits['Cluster'] = sorted_hits['Cluster'].map(cluster_mapping)
+# Process the hits to remove signatures at the end of a line
+sorted_hits = remove_signatures_at_line_end(sorted_hits)
 
 # Variables to store the first cluster's tempo and time signature
 first_cluster_tempo = None
@@ -304,7 +324,7 @@ for i, cluster in enumerate(clusters):
                             'Score': '1.000000', 
                             'Cluster': cluster, 
                             'HexValue': tempoDict.get(first_cluster_tempo.split('_')[0])}
-            sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 2], pd.DataFrame([new_tempo_row]), sorted_hits.iloc[keySig_index + 2:]]).reset_index(drop=True)
+            sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 3], pd.DataFrame([new_tempo_row]), sorted_hits.iloc[keySig_index + 2:]]).reset_index(drop=True)
     # For subsequent clusters
     elif tempo_row.empty:
         # Insert a row with the carried-over tempo
@@ -313,7 +333,7 @@ for i, cluster in enumerate(clusters):
                         'Score': '1.000000', 
                         'Cluster': cluster, 
                         'HexValue': tempoDict.get(first_cluster_tempo.split('_')[0])}
-        sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 2], pd.DataFrame([new_tempo_row]), sorted_hits.iloc[keySig_index + 2:]]).reset_index(drop=True)
+        sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 3], pd.DataFrame([new_tempo_row]), sorted_hits.iloc[keySig_index + 2:]]).reset_index(drop=True)
 
     # Insert or carry forward time signature
     timeSig_row = cluster_data[cluster_data['TemplateName'].str.contains("_timesignature")]
@@ -324,14 +344,14 @@ for i, cluster in enumerate(clusters):
                         'Score': '1.000000', 
                         'Cluster': cluster, 
                         'HexValue': timeSignatureDict.get('44_timesignature')}
-        sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 3], pd.DataFrame([new_timeSig_row]), sorted_hits.iloc[keySig_index + 3:]]).reset_index(drop=True)
+        sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 2], pd.DataFrame([new_timeSig_row]), sorted_hits.iloc[keySig_index + 3:]]).reset_index(drop=True)
     elif timeSig_row.empty:
         new_timeSig_row = {'TemplateName': first_cluster_time_signature, 
                         'BBox': 'Original Time Signature', 
                         'Score': '1.000000', 
                         'Cluster': cluster, 
                         'HexValue': timeSignatureDict.get('44_timesignature')}
-        sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 3], pd.DataFrame([new_timeSig_row]), sorted_hits.iloc[keySig_index + 3:]]).reset_index(drop=True)
+        sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 2], pd.DataFrame([new_timeSig_row]), sorted_hits.iloc[keySig_index + 3:]]).reset_index(drop=True)
     elif i == 0:
         first_cluster_time_signature = timeSig_row.iloc[0]['TemplateName']
 
@@ -346,6 +366,20 @@ int_array = np.array(int_values, dtype=int)
 print(sorted_hits)
 print("The number of matches post-processing:", len(sorted_hits))
 print("Corresponding hex values in decimal form: ", int_array)
+
+def draw_matches_on_sheet(sheet_img, hits):
+    for index, row in hits.iterrows():
+        bbox = row['BBox']
+        # Extract the top-left corner's x and y coordinates
+        x, y = bbox[0], bbox[1]
+
+        # Draw a small circle at the top-left corner of each match
+        cv.circle(sheet_img, (x, y), radius=5, color=(0, 0, 255), thickness=-1)
+
+    # Save the image with the matches highlighted
+    cv.imwrite(os.path.join(outputDirectory, 'Annotated_Sheet.png'), sheet_img)
+
+draw_matches_on_sheet(sheet_img, hits)
 
 measures_per_line = []
 current_measures = 0
