@@ -5,7 +5,6 @@ from pprint import pprint
 import pandas as pd
 from MTM import matchTemplates
 from sklearn.cluster import KMeans
-import matplotlib.pyplot as plt
 
 # Set the LOKY_MAX_CPU_COUNT environment variable
 # Replace '4' with the number of cores you wish to use
@@ -21,7 +20,7 @@ timeSignatureDict = {
 tempoDict = {
     "40_tempo": 0x28,
     "50_tempo": 0x32,
-    "60_tempo.": 0x3C,
+    "60_tempo": 0x3C,
     "70_tempo": 0x46,
     "80_tempo": 0x50,
     "90_tempo": 0x5A,
@@ -53,7 +52,7 @@ keySignatureDict = {
     "sharp_b": 0x0C,
     "sharp_fshrp": 0x0D,
     "sharp_cshrp": 0x0E,
-    "trebleclef": 0x0F,
+    "trebleclef": 0xFF,
 }
 dynamicsDict = {
     "fortissimo": 0x00,
@@ -173,7 +172,7 @@ for filename in os.listdir(templateDirectory):
     template_img = cv.imread(os.path.join(templateDirectory, filename))
     template_img = cv.cvtColor(template_img, cv.COLOR_BGR2GRAY)
     listTemplate.append((filename.split('.')[0], template_img))
-sheet = "sheets/test2.png"
+sheet = "sheets/Sample Sheet 14.png"
 sheet_img = cv.imread(sheet)
 sheet_img = cv.cvtColor(sheet_img, cv.COLOR_BGR2GRAY)
 
@@ -193,8 +192,9 @@ sorted_hits['HexValue'] = sorted_hits['TemplateName'].apply(get_hex_value)
 int_values = sorted_hits['HexValue'].dropna().values
 int_array = np.array(int_values, dtype=int)
 
-#print(int_array)
-#print(sorted_hits)
+print(sorted_hits)
+print("The number of matches found in the music sheet:", len(sorted_hits))
+print("Corresponding hex values in decimal form: ", int_array)
 
 # Make a copy of sorted_hits for modifications
 modified_hits = sorted_hits.copy()
@@ -222,8 +222,8 @@ modified_hits['HexValue'] = modified_hits['TemplateName'].apply(get_hex_value)
 int_values2 = modified_hits['HexValue'].dropna().values
 int_array2 = np.array(int_values2, dtype=int)
 
-print(modified_hits)
-print(int_array2)
+#print(modified_hits)
+#print(int_array2)
 
 # # Extract y-coordinates
 # hits['y'] = hits['BBox'].apply(lambda bbox: bbox[1])
@@ -234,3 +234,27 @@ print(int_array2)
 # plt.xlabel("Y-Coordinate")
 # plt.ylabel("Frequency (Dummy)")
 # plt.show()
+
+
+# #specify path for export
+# path = r'outputs/output_data.txt'
+
+# #export DataFrame to text file
+# with open(path, 'a') as f:
+#     df_string = hits.to_string(header=True, index=True)
+#     f.write(df_string)
+
+# Group files by sheet number
+# sheet_groups = defaultdict(list)
+# for filename in os.listdir(sheetDirectory):
+#     match = re.match(r"Sample Sheet (\d+)(-\d+)?", filename)
+#     if match:
+#         sheet_number = match.group(1)
+#         sheet_groups[sheet_number].append(os.path.join(sheetDirectory, filename))
+# # Sort each group to maintain order (e.g., -1, -2, etc.)
+# for sheet in sheet_groups:
+#     sheet_groups[sheet].sort()
+# for sheet_number, files in sheet_groups.items():
+#     # Read and concatenate images vertically
+#     images = [cv.imread(file, cv.IMREAD_GRAYSCALE) for file in files]
+#     concatenated_image = cv.vconcat(images) if len(images) > 1 else images[0]
