@@ -172,7 +172,7 @@ for filename in os.listdir(templateDirectory):
     template_img = cv.imread(os.path.join(templateDirectory, filename))
     template_img = cv.cvtColor(template_img, cv.COLOR_BGR2GRAY)
     listTemplate.append((filename.split('.')[0], template_img))
-sheet = "sheets/Sample Sheet 1.png"
+sheet = "sheets/Sample Sheet 14.png"
 sheet_img = cv.imread(sheet)
 sheet_img = cv.cvtColor(sheet_img, cv.COLOR_BGR2GRAY)
 
@@ -234,3 +234,27 @@ int_array2 = np.array(int_values2, dtype=int)
 # plt.xlabel("Y-Coordinate")
 # plt.ylabel("Frequency (Dummy)")
 # plt.show()
+
+
+# #specify path for export
+# path = r'outputs/output_data.txt'
+
+# #export DataFrame to text file
+# with open(path, 'a') as f:
+#     df_string = hits.to_string(header=True, index=True)
+#     f.write(df_string)
+
+# Group files by sheet number
+# sheet_groups = defaultdict(list)
+# for filename in os.listdir(sheetDirectory):
+#     match = re.match(r"Sample Sheet (\d+)(-\d+)?", filename)
+#     if match:
+#         sheet_number = match.group(1)
+#         sheet_groups[sheet_number].append(os.path.join(sheetDirectory, filename))
+# # Sort each group to maintain order (e.g., -1, -2, etc.)
+# for sheet in sheet_groups:
+#     sheet_groups[sheet].sort()
+# for sheet_number, files in sheet_groups.items():
+#     # Read and concatenate images vertically
+#     images = [cv.imread(file, cv.IMREAD_GRAYSCALE) for file in files]
+#     concatenated_image = cv.vconcat(images) if len(images) > 1 else images[0]

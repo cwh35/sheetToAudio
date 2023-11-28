@@ -54,62 +54,62 @@ keySignatureDict = {
     "sharp_cshrp": 0x0E,
 }
 dynamicsDict = {
-    "fortissimo": 0x00,
-    "forte": 0x01,
-    "piano": 0x02,
-    "pianissimo": 0x03,
+    "fortissimo": 0x100,
+    "forte": 0x200,
+    "piano": 0x300,
+    "pianissimo": 0x400,
 }
 notesAndRestsDict = {
-    "quarternote_lowc": 0x00,
-    "quarternote_lowd": 0x10,
-    "quarternote_lowe": 0x20,
-    "quarternote_lowf": 0x30,
-    "quarternote_lowg": 0x40,
-    "quarternote_lowa": 0x50,
-    "quarternote_lowb": 0x60,
-    "quarternote_middlec": 0x70,
-    "quarternote_highd": 0x80,
-    "quarternote_highe": 0x90,
-    "quarternote_highf": 0xA0,
-    "quarternote_highg": 0xB0,
-    "quarternote_higha": 0xC0,
-    "quarternote_highb": 0xD0,
-    "quarternote_highc": 0xE0,
-    "halfnote_lowc": 0x01,
-    "halfnote_lowd": 0x11,
-    "halfnote_lowe": 0x21,
-    "halfnote_lowf": 0x31,
-    "halfnote_lowg": 0x41,
-    "halfnote_lowa": 0x51,
-    "halfnote_lowb": 0x61,
-    "halfnote_middlec": 0x71,
-    "halfnote_highd": 0x81,
-    "halfnote_highe": 0x91,
-    "halfnote_highf": 0xA1,
-    "halfnote_highg": 0xB1,
-    "halfnote_higha": 0xC1,
-    "halfnote_highb": 0xD1,
-    "halfnote_highc": 0xE1,
-    "wholenote_lowc": 0x02,
-    "wholenote_lowd": 0x12,
-    "wholenote_lowe": 0x22,
-    "wholenote_lowf": 0x32,
-    "wholenote_lowg": 0x42,
-    "wholenote_lowa": 0x52,
-    "wholenote_lowb": 0x62,
-    "wholenote_middlec": 0x72,
-    "wholenote_highd": 0x82,
-    "wholenote_highe": 0x92,
-    "wholenote_highf": 0xA2,
-    "wholenote_highg": 0xB2,
-    "wholenote_higha": 0xC2,
-    "wholenote_highb": 0xD2,
-    "wholenote_highc": 0xE2,
-    "quarterrest": 0xF5,
-    "halfrest": 0xF6,
-    "wholerest": 0xF7,
-    "eighthrest": 0xF8,
-    "sixteenthrest": 0xF9,
+    "quarternote_lowc": 0x02,
+    "quarternote_lowd": 0x12,
+    "quarternote_lowe": 0x22,
+    "quarternote_lowf": 0x32,
+    "quarternote_lowg": 0x42,
+    "quarternote_lowa": 0x52,
+    "quarternote_lowb": 0x62,
+    "quarternote_middlec": 0x72,
+    "quarternote_highd": 0x82,
+    "quarternote_highe": 0x92,
+    "quarternote_highf": 0xA2,
+    "quarternote_highg": 0xB2,
+    "quarternote_higha": 0xC2,
+    "quarternote_highb": 0xD2,
+    "quarternote_highc": 0xE2,
+    "halfnote_lowc": 0x03,
+    "halfnote_lowd": 0x13,
+    "halfnote_lowe": 0x23,
+    "halfnote_lowf": 0x33,
+    "halfnote_lowg": 0x43,
+    "halfnote_lowa": 0x53,
+    "halfnote_lowb": 0x63,
+    "halfnote_middlec": 0x73,
+    "halfnote_highd": 0x83,
+    "halfnote_highe": 0x93,
+    "halfnote_highf": 0xA3,
+    "halfnote_highg": 0xB3,
+    "halfnote_higha": 0xC3,
+    "halfnote_highb": 0xD3,
+    "halfnote_highc": 0xE3,
+    "wholenote_lowc": 0x04,
+    "wholenote_lowd": 0x14,
+    "wholenote_lowe": 0x24,
+    "wholenote_lowf": 0x34,
+    "wholenote_lowg": 0x44,
+    "wholenote_lowa": 0x54,
+    "wholenote_lowb": 0x64,
+    "wholenote_middlec": 0x74,
+    "wholenote_highd": 0x84,
+    "wholenote_highe": 0x94,
+    "wholenote_highf": 0xA4,
+    "wholenote_highg": 0xB4,
+    "wholenote_higha": 0xC4,
+    "wholenote_highb": 0xD4,
+    "wholenote_highc": 0xE4,
+    "sixteenthrest": 0x05,
+    "eighthrest": 0x06,
+    "quarterrest": 0x07,
+    "halfrest": 0x08,
+    "wholerest": 0x09,
     "trebleclef": 0xFF,
 }
 def get_hex_value(template_name):
@@ -176,6 +176,7 @@ def remove_signatures_at_line_end(hits):
 
     # Drop the identified indices from the hits DataFrame
     hits_dropped = hits.drop(indices_to_drop).reset_index(drop=True)
+    
     return hits_dropped
 
 
@@ -225,8 +226,7 @@ def cluster_and_sort_hits(hits, cluster_range=180):
         sorted_hits = pd.concat([sorted_hits, cluster])
 
     # Drop the added columns if not needed in the final output
-    sorted_hits = sorted_hits.drop(columns=['x', 'y'])
-
+    # sorted_hits = sorted_hits.drop(columns=['x', 'y'])
     return sorted_hits
 
 
@@ -237,13 +237,14 @@ templateDirectory = "templates"
 sheetDirectory = "sheets"
 outputDirectory = "results"
 
+
 listTemplate = []
 # USE CLUSTERING ALGORITHM FOR SPLITTING OF LINES
 for filename in os.listdir(templateDirectory):
     template_img = cv.imread(os.path.join(templateDirectory, filename))
     template_img = cv.cvtColor(template_img, cv.COLOR_BGR2GRAY)
     listTemplate.append((filename.split('.')[0], template_img))
-sheet = "sheets/Sample Sheet 4.png"
+sheet = "sheets/Sample Sheet 9.png"
 sheet_img = cv.imread(sheet)
 sheet_img = cv.cvtColor(sheet_img, cv.COLOR_BGR2GRAY)
 
@@ -252,7 +253,8 @@ hits = matchTemplates(listTemplate,
                       score_threshold=0.93,
                       searchBox=(0, 0, 3000, 1500),
                       method=cv.TM_CCOEFF_NORMED,
-                      maxOverlap=0.3)
+                      maxOverlap=0.2)
+
 # Process the hits
 sorted_hits = cluster_and_sort_hits(hits)
 
@@ -269,8 +271,12 @@ cluster_mapping = {old_id: new_id for new_id, old_id in enumerate(cluster_order)
 
 # Apply mapping
 sorted_hits['Cluster'] = sorted_hits['Cluster'].map(cluster_mapping)
+
 # Process the hits to remove signatures at the end of a line
 sorted_hits = remove_signatures_at_line_end(sorted_hits)
+
+# Convert the 'TemplateName' column to the 'HexValue' column DataFrame
+sorted_hits['HexValue'] = sorted_hits['TemplateName'].apply(get_hex_value)
 
 # Variables to store the first cluster's tempo and time signature
 first_cluster_tempo = None
@@ -302,7 +308,9 @@ for i, cluster in enumerate(clusters):
     if not found_in_keySigDict and trebleclef_index is not None:
         new_row = {'TemplateName': 'cmajor', 
                     'BBox': 'Default Key Signature', 
-                    'Score': '1.000000', 
+                    'Score': '1.000000',
+                    'x': '0',
+                    'y': '0', 
                     'Cluster': cluster, 
                     'HexValue': keySignatureDict.get('cmajor')}
         sorted_hits = pd.concat([sorted_hits.iloc[:trebleclef_index + 1], pd.DataFrame([new_row]), sorted_hits.iloc[trebleclef_index + 1:]]).reset_index(drop=True)
@@ -321,43 +329,50 @@ for i, cluster in enumerate(clusters):
             first_cluster_tempo = '120_tempo'
             new_tempo_row = {'TemplateName': first_cluster_tempo, 
                             'BBox': 'Default Tempo', 
-                            'Score': '1.000000', 
+                            'Score': '1.000000',
+                            'x': '0',
+                            'y': '0',  
                             'Cluster': cluster, 
-                            'HexValue': tempoDict.get(first_cluster_tempo.split('_')[0])}
-            sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 3], pd.DataFrame([new_tempo_row]), sorted_hits.iloc[keySig_index + 2:]]).reset_index(drop=True)
+                            'HexValue': tempoDict.get(first_cluster_tempo)}
+            sorted_hits = pd.concat([sorted_hits.iloc[:trebleclef_index + 3], pd.DataFrame([new_tempo_row]), sorted_hits.iloc[keySig_index + 2:]]).reset_index(drop=True)
     # For subsequent clusters
     elif tempo_row.empty:
         # Insert a row with the carried-over tempo
         new_tempo_row = {'TemplateName': first_cluster_tempo, 
                         'BBox': 'Carried-over Tempo', 
-                        'Score': '1.000000', 
+                        'Score': '1.000000',
+                        'x': '0',
+                        'y': '0',  
                         'Cluster': cluster, 
-                        'HexValue': tempoDict.get(first_cluster_tempo.split('_')[0])}
-        sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 3], pd.DataFrame([new_tempo_row]), sorted_hits.iloc[keySig_index + 2:]]).reset_index(drop=True)
-
+                        'HexValue': tempoDict.get(first_cluster_tempo)}
+        sorted_hits = pd.concat([sorted_hits.iloc[:trebleclef_index + 3], pd.DataFrame([new_tempo_row]), sorted_hits.iloc[keySig_index + 2:]]).reset_index(drop=True)
+    
     # Insert or carry forward time signature
     timeSig_row = cluster_data[cluster_data['TemplateName'].str.contains("_timesignature")]
+    
     if timeSig_row.empty and (i == 0 or first_cluster_time_signature is None):
+        # Setting the default
         first_cluster_time_signature = '44_timesignature'
         new_timeSig_row = {'TemplateName': first_cluster_time_signature, 
                         'BBox': 'Default Time Signature', 
                         'Score': '1.000000', 
+                        'x': '0',
+                        'y': '0', 
                         'Cluster': cluster, 
                         'HexValue': timeSignatureDict.get('44_timesignature')}
-        sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 2], pd.DataFrame([new_timeSig_row]), sorted_hits.iloc[keySig_index + 3:]]).reset_index(drop=True)
+        sorted_hits = pd.concat([sorted_hits.iloc[:trebleclef_index + 2], pd.DataFrame([new_timeSig_row]), sorted_hits.iloc[keySig_index + 3:]]).reset_index(drop=True)
     elif timeSig_row.empty:
         new_timeSig_row = {'TemplateName': first_cluster_time_signature, 
                         'BBox': 'Original Time Signature', 
                         'Score': '1.000000', 
+                        'x': '0',
+                        'y': '0', 
                         'Cluster': cluster, 
-                        'HexValue': timeSignatureDict.get('44_timesignature')}
-        sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 2], pd.DataFrame([new_timeSig_row]), sorted_hits.iloc[keySig_index + 3:]]).reset_index(drop=True)
+                        'HexValue': timeSignatureDict.get(first_cluster_time_signature)}
+        sorted_hits = pd.concat([sorted_hits.iloc[:trebleclef_index + 2], pd.DataFrame([new_timeSig_row]), sorted_hits.iloc[keySig_index + 3:]]).reset_index(drop=True)
     elif i == 0:
         first_cluster_time_signature = timeSig_row.iloc[0]['TemplateName']
 
-
-# Convert the 'TemplateName' column to the 'HexValue' column DataFrame
-sorted_hits['HexValue'] = sorted_hits['TemplateName'].apply(get_hex_value)
 
 # Convert hex values to integers and store in a NumPy array
 int_values = sorted_hits['HexValue'].dropna().values
@@ -366,20 +381,6 @@ int_array = np.array(int_values, dtype=int)
 print(sorted_hits)
 print("The number of matches post-processing:", len(sorted_hits))
 print("Corresponding hex values in decimal form: ", int_array)
-
-def draw_matches_on_sheet(sheet_img, hits):
-    for index, row in hits.iterrows():
-        bbox = row['BBox']
-        # Extract the top-left corner's x and y coordinates
-        x, y = bbox[0], bbox[1]
-
-        # Draw a small circle at the top-left corner of each match
-        cv.circle(sheet_img, (x, y), radius=5, color=(0, 0, 255), thickness=-1)
-
-    # Save the image with the matches highlighted
-    cv.imwrite(os.path.join(outputDirectory, 'Annotated_Sheet.png'), sheet_img)
-
-draw_matches_on_sheet(sheet_img, hits)
 
 measures_per_line = []
 current_measures = 0
@@ -408,3 +409,4 @@ if current_measures > 0 or current_beats > 0:
     measures_per_line.append(current_measures + int(current_beats > 0))
 
 print("Measures per line: ", measures_per_line)
+
