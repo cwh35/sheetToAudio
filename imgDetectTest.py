@@ -258,3 +258,9 @@ int_array2 = np.array(int_values2, dtype=int)
 #     # Read and concatenate images vertically
 #     images = [cv.imread(file, cv.IMREAD_GRAYSCALE) for file in files]
 #     concatenated_image = cv.vconcat(images) if len(images) > 1 else images[0]
+
+img1 = cv.imread('sheets/Sample Sheet 13-1.png')
+img2 = cv.imread('sheets/Sample Sheet 13-2.png')
+
+img = cv.vconcat([img1, img2])
+sheet_img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)

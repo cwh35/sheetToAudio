@@ -1,0 +1,12 @@
+Sample Sheet 1: All good
+Sample Sheet 2: 70 tempo wasn't identified: set to the default 120
+Sample Sheet 3: All good
+Sample Sheet 4: All good
+Sample Sheet 5: All good
+Sample Sheet 6: All good
+Sample Sheet 7: pianissimo did not show up
+Sample Sheet 8: All good
+Sample Sheet 9: All good
+Sample Sheet 10: All good
+Sample Sheet 13: All good
+Sample Sheet 14: All good

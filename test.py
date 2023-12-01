@@ -132,7 +132,8 @@ def get_beat_value(template_name, current_time_signature):
     elif 'halfnote' in template_name or 'halfrest' in template_name:
         return 2  # Half notes/rests are 2 beats
     elif 'wholenote' in template_name:
-        return 4  # Whole notes/rests are 4 beats
+        # Whole notes represent a full measure, regardless of time signature
+        return current_time_signature 
     elif 'wholerest' in template_name:
         # Whole rests represent a full measure, regardless of the time signature
         return current_time_signature
@@ -237,6 +238,15 @@ templateDirectory = "templates"
 sheetDirectory = "sheets"
 outputDirectory = "results"
 
+# img1 = cv.imread('sheets/Sample Sheet 13-1.png')
+# img2 = cv.imread('sheets/Sample Sheet 13-2.png')
+# img3 = cv.imread('sheets/Sample Sheet 14-3.png')
+
+# img = cv.vconcat([img1, img2])
+# sheet_img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+
+# cv.imwrite("sheets/Sample Sheet 13 Combined.png", sheet_img)
+
 
 listTemplate = []
 # USE CLUSTERING ALGORITHM FOR SPLITTING OF LINES
@@ -244,16 +254,16 @@ for filename in os.listdir(templateDirectory):
     template_img = cv.imread(os.path.join(templateDirectory, filename))
     template_img = cv.cvtColor(template_img, cv.COLOR_BGR2GRAY)
     listTemplate.append((filename.split('.')[0], template_img))
-sheet = "sheets/Sample Sheet 9.png"
+sheet = "sheets/Sample Sheet 11.png"
 sheet_img = cv.imread(sheet)
 sheet_img = cv.cvtColor(sheet_img, cv.COLOR_BGR2GRAY)
 
 hits = matchTemplates(listTemplate,
                       sheet_img,
                       score_threshold=0.93,
-                      searchBox=(0, 0, 3000, 1500),
+                      searchBox=(0, 0, sheet_img.shape[1], sheet_img.shape[0]),
                       method=cv.TM_CCOEFF_NORMED,
-                      maxOverlap=0.2)
+                      maxOverlap=0.3)
 
 # Process the hits
 sorted_hits = cluster_and_sort_hits(hits)
@@ -282,6 +292,9 @@ sorted_hits['HexValue'] = sorted_hits['TemplateName'].apply(get_hex_value)
 first_cluster_tempo = None
 first_cluster_time_signature = None
 
+# Variable for the carry over time signature
+carry_over_time_signature = None
+
 for i, cluster in enumerate(clusters):
     # Filter the DataFrame for the current cluster
     cluster_data = sorted_hits[sorted_hits['Cluster'] == cluster]
@@ -291,7 +304,7 @@ for i, cluster in enumerate(clusters):
 
     # Store the index of the 'trebleclef' row
     trebleclef_index = None
-
+    
     # Iterate through each cluster
     for index, row in cluster_data.iterrows():
         # Get the current template name
@@ -316,8 +329,40 @@ for i, cluster in enumerate(clusters):
         sorted_hits = pd.concat([sorted_hits.iloc[:trebleclef_index + 1], pd.DataFrame([new_row]), sorted_hits.iloc[trebleclef_index + 1:]]).reset_index(drop=True)
         keySig_index = trebleclef_index + 1
     else:
-        keySig_index = trebleclef_index
+        keySig_index = trebleclef_index + 1
 
+    timeSig_row = cluster_data[cluster_data['TemplateName'].str.contains("_timesignature")]
+
+    if i == 0:
+        if timeSig_row.empty:
+            # Setting the default for the first cluster
+            carry_over_time_signature = '44_timesignature'
+            new_timeSig_row = {'TemplateName': carry_over_time_signature,
+                               'BBox': 'Default Time Signature',
+                               'Score': '1.000000',
+                               'x': '0',
+                               'y': '0',
+                               'Cluster': cluster,
+                               'HexValue': timeSignatureDict.get(carry_over_time_signature)}
+            sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 1], pd.DataFrame([new_timeSig_row]), sorted_hits.iloc[keySig_index + 1:]]).reset_index(drop=True)
+        else:
+            # Set to identified time signature for the first cluster
+            carry_over_time_signature = timeSig_row.iloc[0]['TemplateName']
+    else:
+        if timeSig_row.empty:
+            # Carry over the last identified time signature
+            new_timeSig_row = {'TemplateName': carry_over_time_signature,
+                               'BBox': 'Carried-Over Time Signature',
+                               'Score': '1.000000',
+                               'x': '0',
+                               'y': '0',
+                               'Cluster': cluster,
+                               'HexValue': timeSignatureDict.get(carry_over_time_signature)}
+            sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 1], pd.DataFrame([new_timeSig_row]), sorted_hits.iloc[keySig_index + 1:]]).reset_index(drop=True)
+        else:
+            # Update the time signature when a new one is found
+            carry_over_time_signature = timeSig_row.iloc[0]['TemplateName']
+        
     # Process Tempo
     tempo_row = cluster_data[cluster_data['TemplateName'].str.contains("_tempo")]
     # If it's the first cluster
@@ -334,7 +379,7 @@ for i, cluster in enumerate(clusters):
                             'y': '0',  
                             'Cluster': cluster, 
                             'HexValue': tempoDict.get(first_cluster_tempo)}
-            sorted_hits = pd.concat([sorted_hits.iloc[:trebleclef_index + 3], pd.DataFrame([new_tempo_row]), sorted_hits.iloc[keySig_index + 2:]]).reset_index(drop=True)
+            sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 2], pd.DataFrame([new_tempo_row]), sorted_hits.iloc[keySig_index + 2:]]).reset_index(drop=True)
     # For subsequent clusters
     elif tempo_row.empty:
         # Insert a row with the carried-over tempo
@@ -345,39 +390,19 @@ for i, cluster in enumerate(clusters):
                         'y': '0',  
                         'Cluster': cluster, 
                         'HexValue': tempoDict.get(first_cluster_tempo)}
-        sorted_hits = pd.concat([sorted_hits.iloc[:trebleclef_index + 3], pd.DataFrame([new_tempo_row]), sorted_hits.iloc[keySig_index + 2:]]).reset_index(drop=True)
-    
-    # Insert or carry forward time signature
-    timeSig_row = cluster_data[cluster_data['TemplateName'].str.contains("_timesignature")]
-    
-    if timeSig_row.empty and (i == 0 or first_cluster_time_signature is None):
-        # Setting the default
-        first_cluster_time_signature = '44_timesignature'
-        new_timeSig_row = {'TemplateName': first_cluster_time_signature, 
-                        'BBox': 'Default Time Signature', 
-                        'Score': '1.000000', 
-                        'x': '0',
-                        'y': '0', 
-                        'Cluster': cluster, 
-                        'HexValue': timeSignatureDict.get('44_timesignature')}
-        sorted_hits = pd.concat([sorted_hits.iloc[:trebleclef_index + 2], pd.DataFrame([new_timeSig_row]), sorted_hits.iloc[keySig_index + 3:]]).reset_index(drop=True)
-    elif timeSig_row.empty:
-        new_timeSig_row = {'TemplateName': first_cluster_time_signature, 
-                        'BBox': 'Original Time Signature', 
-                        'Score': '1.000000', 
-                        'x': '0',
-                        'y': '0', 
-                        'Cluster': cluster, 
-                        'HexValue': timeSignatureDict.get(first_cluster_time_signature)}
-        sorted_hits = pd.concat([sorted_hits.iloc[:trebleclef_index + 2], pd.DataFrame([new_timeSig_row]), sorted_hits.iloc[keySig_index + 3:]]).reset_index(drop=True)
-    elif i == 0:
-        first_cluster_time_signature = timeSig_row.iloc[0]['TemplateName']
-
+        sorted_hits = pd.concat([sorted_hits.iloc[:keySig_index + 2], pd.DataFrame([new_tempo_row]), sorted_hits.iloc[keySig_index + 2:]]).reset_index(drop=True)
 
 # Convert hex values to integers and store in a NumPy array
 int_values = sorted_hits['HexValue'].dropna().values
 int_array = np.array(int_values, dtype=int)
 
+#specify path for export
+path = r'outputs/output_data.txt'
+
+#export DataFrame to text file
+with open(path, 'w') as f:
+    df_string = sorted_hits.to_string(header=True, index=True)
+    f.write(df_string)
 print(sorted_hits)
 print("The number of matches post-processing:", len(sorted_hits))
 print("Corresponding hex values in decimal form: ", int_array)
