@@ -76,31 +76,45 @@ def OpenMenu():     #LCD Opening function
     #max selection based on experimental values
 	sel_max=26450
     lcd.text("Select Song",1)
-
+    
+    #get usb directory
+	basepath='media/pi'
+	foundDrive=0
+	while foundDrive==0:
+		mediaDevs=os.listdir(basepath)
+		foundDrive=len(mediaDevs)
+	basepath=basepath+'/'+foundDrive[0]
+	
+	#get pngs
+	allSongs=os.listdir(basepath)
+	allSongs=[f for f in allSongs if f.endswith(".png")]
+	
     """
     Read in song options
     Set song ranges with the voltage values
     Determine range with the number of pieces we're incoorperating
     """
-    while process == 0:
-		sel=selector.value         
-        options=4
-        if sel >= 0 and sel < 5240:
-            lcd.text("Song 1",2)
-
-        elif sel >= 5240 and sel < 10480:
-            lcd.text("Song 2",2)
-
-        elif sel >= 15720 and sel < 20960:
-            lcd.text("Song 3",2)
-
-        else:
-            lcd.text("Song 4",2)
-            
-        process = GPIO.input(processBtn)
+    if len(allSongs>0):
+		
+		while process == 0:
+			options=len(allSongs)+1.0
+			sel=(sel_max/selector.value*options+0.75)        
         
-        if process == 1:
-            break
+			if sel == 0:
+				lcd.text("Go To Menu",2)
+			else:
+				lcd.text(allSongs[sel-1],2)
+            
+			process = GPIO.input(processBtn)
+        
+			if process == 1:
+				break
+		if sel == 0:
+			return 0,0,0,0
+		else:
+			song_path=basepath+ '/'+allSongs[sel-1]
+	else:
+		return 0,0,0,0
     
     #Instrument selection
     process=0
@@ -113,42 +127,46 @@ def OpenMenu():     #LCD Opening function
     Set instrument ranges with the voltage values
     Determine range with the number of instruments we're incoorperating
     """
-    options=8.0
+    options=9.0
     while process == 0:  
         sel=int(sel_max/selector.value*options+0.75)
         
-        if sel == 1:
+        if sel == 2:
             lcd.text("Alto Sax",2)
     
-        elif sel == 2:
+        elif sel == 3:
             lcd.text('Clarinet',2)
 
-        elif sel == 3:
+        elif sel == 4:
             lcd.text("Piano",2)
             
-		elif sel == 4:
+		elif sel == 5:
 			lcd.text("Tenor Sax",2)
 			
-		elif sel == 5:
+		elif sel == 6:
 			lcd.text("Trumpet",2)
 			
-		elif sel == 6:
+		elif sel == 7:
 			lcd.text("Violin",2)
 			
-		elif sel == 7:
+		elif sel == 8:
 			lcd.text("Voice",2)
 			
-		else:
-			sel=0
+		elif sel==1:
             lcd.text("Tones",2)
+        else:
+			lcd.text("Go To Menu",2)
 
 			
         process = GPIO.input(processBtn)
         
         if process == 1:
            break
+        
+        if sel==0:
+			return 0,0,0,0
     
-	instr=sel
+	instr=sel-1
 	
     #Playback selection
     process=0
@@ -156,31 +174,37 @@ def OpenMenu():     #LCD Opening function
     lcd.clear()
     lcd.text("Select Playback",1)
     time.sleep(1)
-    options=4.0
+    options=5.0
     while process == 0:  
-		sel=int(sel_max/selector.value*options+1)/4.0 
+		sel=int(sel_max/selector.value*options+0.75)
         
-        if sel == 1
+        if sel == 2
             lcd.text("3/4 speed",2)
+            tempo_factor=3.0/4.0
     
-        elif sel == 2:
-            lcd.text("1/2 speed",2)
-
         elif sel == 3:
+            lcd.text("1/2 speed",2)
+            tempo_factor=2.0/4.0
+
+        elif sel == 4:
             lcd.text("1/4 speed",2)
+            tempo_factor=1.0/4.0
             
-		else:
-			sel=0
+		elif sel == 1:
             lcd.text("Original Tempo",2)
+            tempo_factor=1.0
+        else:
+			lcd.text("Go To Menu",2)
             
         process = GPIO.input(24)
         
         if process == 1:
            break
-           
-	tempo_factor=sel
+    
+    if sel==0:
+		return 0,0,0,0
 	
-	return song_name,instr,tempo_factor
+	return song_path,instr,tempo_factor,1
 
 #Computer Vision
 def processSong():
@@ -758,47 +782,56 @@ def playSong(song,measures,tempo_factor,instr):
 def main(args):
 	while 1:
 		lcd.clear()
-		
+		lcd.text("Push Process",1)
+		lcd.text("To Start",2)
+		startP = 0
+		while startP == 0:
+			startP = GPIO.input(processBtn)
+		time.sleep(0.5)
+		lcd.clear()
 		#get selections from menu
-		song_name,instr,tempo_factor=OpenMenu()
+		song_name,instr,tempo_factor,keepGoing=OpenMenu()
 		
 		#process song
 		lcd.clear()
-		lcd.text("Processing. . .",1)
-		song,measures=processSong()
 		
-		#When processing is done, wait for play
-		playing=1
-		while playing:
-			lcd.clear()
-			lcd.text("Ready",1)
-			lcd.text("Push Play",2)
-			playNow = 0
+		if keepGoing:
+			lcd.text("Processing. . .",1)
+			song,measures=processSong()
+		
+			#When processing is done, wait for play
+			playing=1
+			while playing:
+				lcd.clear()
+				lcd.text("Ready",1)
+				lcd.text("Push Play",2)
+				playNow = 0
 			
-			#push play to start
-			while playNow == 0:
-				playNow = GPIO.input(playBtn)
-			time.sleep(0.5)
+				#push play to start
+				while playNow == 0:
+					playNow = GPIO.input(playBtn)
+				time.sleep(0.5)
 			
-			playSong(song,measures,tempo_factor,instr)
+				playSong(song,measures,tempo_factor,instr)
 			
-			#ask to replay
-			lcd.clear()
-			lcd.text("Replay Song?",1)
-			lcd.text("Push Play",2)
-			userChoice = 0
-			while userChoice == 0:
-				replay = GPIO.input(playBtn)
-				goMenu = GPIO.input(processBtn)
+				#ask to replay
+				lcd.clear()
+				lcd.text("Replay Song?",1)
+				lcd.text("Push Play",2)
+				userChoice = 0
+				while userChoice == 0:
+					replay = GPIO.input(playBtn)
+					goMenu = GPIO.input(processBtn)
 				
-				if goMenu == 1:
-					userChoice=1
-				elif replay == 1:
-					userChoice=2
+					if goMenu == 1:
+						userChoice=1
+					elif replay == 1:
+						userChoice=2
+				lcd.clear()
 			
-			#go to menu
-			if userChoice!=2:
-				playing=0
+				#go to menu
+				if userChoice!=2:
+					playing=0
 			
 		
 	
