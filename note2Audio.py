@@ -68,33 +68,33 @@ srl = serial.Serial(
         bytesize=serial.EIGHTBITS,
         timeout=1
 )
-
-def OpenMenu():     #LCD Opening function
-	
-    #Song selection
-    process=0
-    #max selection based on experimental values
-	sel_max=26450
-    lcd.text("Select Song",1)
     
-    #get usb directory
+def OpenMenu():     
+	#LCD Opening function
+	
+	#Song selection
+	process = 0 
+	sel_max = 26450
+	lcd.text("Select Song",1)
+	
+	#get usb directory
 	basepath='media/pi'
 	foundDrive=0
-	while foundDrive==0:
+	while (foundDrive == 0):
 		mediaDevs=os.listdir(basepath)
-		foundDrive=len(mediaDevs)
-	basepath=basepath+'/'+foundDrive[0]
+		foundDrive = len(mediaDevs)
+	basepath = basepath + '/' + foundDrive[0]
+	
+	#get pngs
+
 	
 	#get pngs
 	allSongs=os.listdir(basepath)
 	allSongs=[f for f in allSongs if f.endswith(".png")]
 	
-    """
-    Read in song options
-    Set song ranges with the voltage values
-    Determine range with the number of pieces we're incoorperating
-    """
-    if len(allSongs>0):
+ 
+	#read in song names
+	if len(allSongs>0):
 		
 		while process == 0:
 			options=len(allSongs)+1.0
@@ -115,30 +115,30 @@ def OpenMenu():     #LCD Opening function
 			song_path=basepath+ '/'+allSongs[sel-1]
 	else:
 		return 0,0,0,0
+	
+	#Instrument selection
+	process=0
     
-    #Instrument selection
-    process=0
-    
-    lcd.clear()
-    lcd.text("Select Instrument",1)
-    time.sleep(1)
-    
-    """
-    Set instrument ranges with the voltage values
-    Determine range with the number of instruments we're incoorperating
-    """
-    options=9.0
-    while process == 0:  
-        sel=int(sel_max/selector.value*options+0.75)
+	lcd.clear()
+	lcd.text("Select Instrument",1)
+	time.sleep(1)
+	
+	"""
+	Set instrument ranges with the voltage values
+	Determine range with the number of instruments we're incoorperating
+	"""
+	options=9.0
+	while process == 0:  
+		sel=int(sel_max/selector.value*options+0.75)
         
-        if sel == 2:
-            lcd.text("Alto Sax",2)
+		if sel == 2:
+			lcd.text("Alto Sax",2)
     
-        elif sel == 3:
-            lcd.text('Clarinet',2)
-
-        elif sel == 4:
-            lcd.text("Piano",2)
+		elif sel == 3:
+			lcd.text('Clarinet',2)
+			
+		elif sel == 4:
+			lcd.text("Piano",2)
             
 		elif sel == 5:
 			lcd.text("Tenor Sax",2)
@@ -153,55 +153,54 @@ def OpenMenu():     #LCD Opening function
 			lcd.text("Voice",2)
 			
 		elif sel==1:
-            lcd.text("Tones",2)
-        else:
+			lcd.text("Tones",2)
+		else:
 			lcd.text("Go To Menu",2)
-
-			
-        process = GPIO.input(processBtn)
-        
-        if process == 1:
-           break
-        
-        if sel==0:
+		
+		
+		process = GPIO.input(processBtn)
+		
+		if process == 1:
+			break
+		if sel==0:
 			return 0,0,0,0
-    
+	
 	instr=sel-1
 	
-    #Playback selection
-    process=0
-    
-    lcd.clear()
-    lcd.text("Select Playback",1)
-    time.sleep(1)
-    options=5.0
-    while process == 0:  
+	#Playback selection
+	process=0
+	
+	lcd.clear()
+	lcd.text("Select Playback",1)
+	time.sleep(1)
+	options=5.0
+	while process == 0:  
 		sel=int(sel_max/selector.value*options+0.75)
-        
-        if sel == 2
-            lcd.text("3/4 speed",2)
-            tempo_factor=3.0/4.0
-    
-        elif sel == 3:
-            lcd.text("1/2 speed",2)
-            tempo_factor=2.0/4.0
-
-        elif sel == 4:
-            lcd.text("1/4 speed",2)
-            tempo_factor=1.0/4.0
-            
+		
+		if sel == 2:
+			lcd.text("3/4 speed",2)
+			tempo_factor=3.0/4.0
+		
+		elif sel == 3:
+			lcd.text("1/2 speed",2)
+			tempo_factor=2.0/4.0
+		
+		elif sel == 4:
+			lcd.text("1/4 speed",2)
+			tempo_factor=1.0/4.0
+			
 		elif sel == 1:
-            lcd.text("Original Tempo",2)
-            tempo_factor=1.0
-        else:
+			lcd.text("Original Tempo",2)
+			tempo_factor=1.0
+		else:
 			lcd.text("Go To Menu",2)
-            
-        process = GPIO.input(24)
-        
-        if process == 1:
-           break
-    
-    if sel==0:
+		
+		process = GPIO.input(24)
+		
+		if process == 1:
+			break
+	
+	if sel==0:
 		return 0,0,0,0
 	
 	return song_path,instr,tempo_factor,1
@@ -719,13 +718,13 @@ def playSong(song,measures,tempo_factor,instr):
     #countdown
     lcd.clear()
     lcd.text("Begin In:",1)
-	lcd.text("3",2)
-	time.sleep(1)
-	lcd.text("2",2)
-	time.sleep(1)
-	lcd.text("1",2)
-	time.sleep(1)
-	lcd.clear()
+    lcd.text("3",2)
+    time.sleep(1)
+    lcd.text("2",2)
+    time.sleep(1)
+    lcd.text("1",2)
+    time.sleep(1)
+    lcd.clear()
 
     #loop through notes
     #go line by line, keeping track of measure
@@ -763,22 +762,18 @@ def playSong(song,measures,tempo_factor,instr):
 
                 srl.write((statusByte+freqs[f]+vol).encode())
                 #strip[measure]=(255,192,0)
-				strip[0]=color
-				lcd.text(noteNames[f],1)
-				lcd.text(notes[note],2)
+                strip[0]=color
+                lcd.text(noteNames[f],1)
+                lcd.text(notes[note],2)
                 time.sleep(d-waittime)
                 srl.write(b'800')
                 #strip[measure]=coff
-				strip[0]=coff
+                strip[0]=coff
                 time.sleep(waittime)
                 meas=meas+mS
-                k=k+1   
-                
         line = line + 1
             
-        
-   
-
+            
 def main(args):
 	while 1:
 		lcd.clear()
@@ -835,7 +830,7 @@ def main(args):
 			
 		
 	
-    return 0
+	return 0
 
 if __name__ == '__main__':
     import sys
