@@ -60,6 +60,36 @@ dynamicsDict = {
     "pianissimo": 0x400,
 }
 notesAndRestsDict = {
+    "sixteenthnote_lowc": 0x00,
+    "sixteenthnote_lowd": 0x10,
+    "sixteenthnote_lowe": 0x20,
+    "sixteenthnote_lowf": 0x30,
+    "sixteenthnote_lowg": 0x40,
+    "sixteenthnote_lowa": 0x50,
+    "sixteenthnote_lowb": 0x60,
+    "sixteenthnote_middlec": 0x70,
+    "sixteenthnote_highd": 0x80,
+    "sixteenthnote_highe": 0x90,
+    "sixteenthnote_highf": 0xA0,
+    "sixteenthnote_highg": 0xB0,
+    "sixteenthnote_higha": 0xC0,
+    "sixteenthnote_highb": 0xD0,
+    "sixteenthnote_highc": 0xE0,
+    "eighthnote_lowc": 0x01,
+    "eighthnote_lowd": 0x11,
+    "eighthnote_lowe": 0x21,
+    "eighthnote_lowf": 0x31,
+    "eighthnote_lowg": 0x41,
+    "eighthnote_lowa": 0x51,
+    "eighthnote_lowb": 0x61,
+    "eighthnote_middlec": 0x71,
+    "eighthnote_highd": 0x81,
+    "eighthnote_highe": 0x91,
+    "eighthnote_highf": 0xA1,
+    "eighthnote_highg": 0xB1,
+    "eighthnote_higha": 0xC1,
+    "eighthnote_highb": 0xD1,
+    "eighthnote_highc": 0xE1,
     "quarternote_lowc": 0x02,
     "quarternote_lowd": 0x12,
     "quarternote_lowe": 0x22,
@@ -238,14 +268,14 @@ templateDirectory = "templates"
 sheetDirectory = "sheets"
 outputDirectory = "results"
 
-# img1 = cv.imread('sheets/Sample Sheet 13-1.png')
-# img2 = cv.imread('sheets/Sample Sheet 13-2.png')
-# img3 = cv.imread('sheets/Sample Sheet 14-3.png')
+# img1 = cv.imread('sheets/Sample Sheet 12-1.png')
+# img2 = cv.imread('sheets/Sample Sheet 12-2.png')
+# #img3 = cv.imread('sheets/Sample Sheet 14-3.png')
 
 # img = cv.vconcat([img1, img2])
 # sheet_img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
-# cv.imwrite("sheets/Sample Sheet 13 Combined.png", sheet_img)
+# cv.imwrite("sheets/Sample Sheet 12 Combined.png", sheet_img)
 
 
 listTemplate = []
@@ -254,7 +284,7 @@ for filename in os.listdir(templateDirectory):
     template_img = cv.imread(os.path.join(templateDirectory, filename))
     template_img = cv.cvtColor(template_img, cv.COLOR_BGR2GRAY)
     listTemplate.append((filename.split('.')[0], template_img))
-sheet = "sheets/Sample Sheet 11.png"
+sheet = "sheets/Sample Sheet 17.png"
 sheet_img = cv.imread(sheet)
 sheet_img = cv.cvtColor(sheet_img, cv.COLOR_BGR2GRAY)
 
@@ -395,7 +425,6 @@ for i, cluster in enumerate(clusters):
 # Convert hex values to integers and store in a NumPy array
 int_values = sorted_hits['HexValue'].dropna().values
 int_array = np.array(int_values, dtype=int)
-
 #specify path for export
 path = r'outputs/output_data.txt'
 
