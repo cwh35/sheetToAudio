@@ -590,7 +590,7 @@ def playSong(song,measures,tempo_factor,instr):
                     note=note%5
                 d=durations[note]
                 mS=mStep[note]
-                if (f==15 and note==4):
+                if (note==4):
                     d=d*tSig/4.0
                     mS=mS*tSig/4.0
                     
