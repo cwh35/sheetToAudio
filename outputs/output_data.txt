@@ -1,52 +1,23 @@
-           TemplateName                         BBox     Score     x    y  Cluster  HexValue
-0            trebleclef            (87, 261, 34, 88)       1.0    87  261        0       255
-1                cmajor        Default Key Signature  1.000000     0    0        0         0
-2      44_timesignature           (125, 260, 20, 60)  0.999335   125  260        0        68
-3             120_tempo           (138, 190, 57, 33)  0.955848   138  190        0       120
-4                 forte           (154, 318, 27, 30)  0.998497   154  318        0       512
-5    eighthnote_middlec           (156, 266, 19, 67)  0.998913   156  266        0       113
-6    eighthnote_middlec           (195, 266, 19, 67)  0.984887   195  266        0       113
-7   quarternote_middlec           (233, 265, 25, 70)  0.973755   233  265        0       114
-8       eighthnote_lowb           (289, 268, 20, 73)  0.979287   289  268        0        97
-9       eighthnote_lowb           (327, 268, 20, 73)  0.962207   327  268        0        97
-10     quarternote_lowb           (365, 268, 21, 73)  0.996084   365  268        0        98
-11      eighthnote_lowa           (443, 254, 31, 66)  0.994849   443  254        0        81
-12      eighthnote_lowb           (476, 268, 20, 73)  0.993963   476  268        0        97
-13     quarternote_lowa           (515, 254, 21, 71)  0.968385   515  254        0        82
-14        halfnote_lowe           (568, 262, 21, 66)  0.947606   568  262        0        35
-15      eighthnote_lowa           (684, 254, 31, 66)  0.960277   684  254        0        81
-16      eighthnote_lowb           (717, 268, 20, 73)   0.98329   717  268        0        97
-17     quarternote_lowa           (756, 254, 21, 71)   0.99969   756  254        0        82
-18     quarternote_lowe           (811, 262, 22, 63)  0.993382   811  262        0        34
-19     quarternote_lowg           (864, 257, 22, 63)   0.97998   864  257        0        66
-20      eighthnote_lowa           (941, 254, 31, 66)  0.973881   941  254        0        81
-21      eighthnote_lowb           (974, 268, 20, 73)  0.994519   974  268        0        97
-22     quarternote_lowa          (1013, 254, 21, 71)  0.994925  1013  254        0        82
-23        halfnote_lowe          (1067, 262, 21, 66)  0.986241  1067  262        0        35
-24           trebleclef            (87, 420, 34, 88)       1.0    87  420        1       255
-25               cmajor        Default Key Signature  1.000000     0    0        1         0
-26     44_timesignature  Carried-Over Time Signature  1.000000     0    0        1        68
-27            120_tempo           Carried-over Tempo  1.000000     0    0        1       120
-28     quarternote_lowd           (128, 425, 22, 70)  0.992653   128  425        1        18
-29      eighthnote_lowe           (204, 422, 31, 58)  0.982403   204  422        1        33
-30      eighthnote_lowf           (257, 418, 31, 53)  0.990789   257  418        1        49
-31     quarternote_lowg           (302, 416, 22, 63)   0.98461   302  416        1        66
-32      eighthnote_lowa           (380, 413, 31, 66)  0.972602   380  413        1        81
-33      eighthnote_lowg           (431, 416, 31, 59)  0.997683   431  416        1        65
-34      eighthnote_lowd           (500, 424, 30, 65)  0.987542   500  424        1        17
-35      eighthnote_lowe           (551, 422, 31, 58)   0.98438   551  422        1        33
-36     quarternote_lowf           (598, 419, 22, 58)  0.987993   598  419        1        50
-37        halfnote_lowg           (670, 415, 22, 66)    0.9991   670  415        1        67
-38          quarterrest           (808, 418, 20, 59)  0.989157   808  418        1         7
-39      eighthnote_lowa           (888, 413, 31, 66)  0.994923   888  413        1        81
-40      eighthnote_lowg           (938, 416, 31, 59)   0.97678   938  416        1        65
-41      eighthnote_lowa           (991, 413, 31, 66)  0.995544   991  413        1        81
-42      eighthnote_lowg          (1041, 416, 31, 59)   0.97626  1041  416        1        65
-43     quarternote_lowa          (1088, 413, 21, 71)  0.996709  1088  413        1        82
-44           trebleclef            (87, 579, 34, 88)       1.0    87  579        2       255
-45               cmajor        Default Key Signature  1.000000     0    0        2         0
-46     44_timesignature  Carried-Over Time Signature  1.000000     0    0        2        68
-47            120_tempo           Carried-over Tempo  1.000000     0    0        2       120
-48     quarternote_lowa           (127, 572, 21, 71)  0.992286   127  572        2        82
-49     quarternote_lowe           (403, 580, 22, 63)  0.980542   403  580        2        34
-50        halfnote_lowe           (677, 580, 21, 66)  0.985097   677  580        2        35
+           TemplateName                 BBox     Score     x    y  Cluster  HexValue
+0            trebleclef    (86, 259, 34, 88)  0.999607    86  259        0       255
+1               sharp_a   (129, 247, 44, 87)  0.999999   129  247        0        10
+2      44_timesignature   (174, 258, 20, 60)  0.992472   174  258        0        68
+3              50_tempo   (182, 187, 43, 28)  0.973408   182  187        0        50
+4                 forte   (203, 316, 27, 30)  0.989230   203  316        0       512
+5      quarternote_lowa   (206, 252, 21, 71)  0.994186   206  252        0        82
+6      quarternote_lowb   (261, 266, 21, 73)  0.981065   261  266        0        98
+7   quarternote_middlec   (315, 263, 25, 70)  0.979940   315  263        0       114
+8     quarternote_highd   (371, 260, 27, 62)  0.997706   371  260        0       130
+9     quarternote_highe   (445, 258, 28, 58)  0.986344   445  258        0       146
+10    quarternote_highf   (499, 255, 23, 64)  0.969908   499  255        0       162
+11    quarternote_highg   (556, 251, 24, 71)  0.994555   556  251        0       178
+12    quarternote_higha   (613, 248, 31, 77)  0.998771   613  248        0       194
+13                piano   (680, 320, 25, 24)  0.937165   680  320        0       768
+14    quarternote_higha   (686, 248, 31, 77)  0.977156   686  248        0       194
+15    quarternote_highg   (740, 251, 24, 71)  0.988862   740  251        0       178
+16    quarternote_highf   (795, 255, 23, 64)  0.999986   795  255        0       162
+17    quarternote_highe   (852, 258, 28, 58)  0.990376   852  258        0       146
+18    quarternote_highd   (923, 260, 27, 62)  0.984357   923  260        0       130
+19  quarternote_middlec   (979, 263, 25, 70)  0.998985   979  263        0       114
+20     quarternote_lowb  (1036, 266, 21, 73)  0.992774  1036  266        0        98
+21     quarternote_lowa  (1093, 252, 21, 71)  0.965348  1093  252        0        82
