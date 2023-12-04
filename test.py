@@ -167,9 +167,9 @@ def get_beat_value(template_name, current_time_signature):
     elif 'wholerest' in template_name:
         # Whole rests represent a full measure, regardless of the time signature
         return current_time_signature
-    elif 'eighthrest' in template_name:
+    elif 'eighthrest' in template_name or 'eighthnote' in template_name:
         return 1/8  # Eighth rests are 1/8 beat
-    elif 'sixteenthrest' in template_name:
+    elif 'sixteenthrest' in template_name or 'sixteenthnote' in template_name:
         return 1/16  # Sixteenth rests are 1/16 beat
     else:
         return 0  # No beat value or not a note/rest
@@ -257,7 +257,7 @@ def cluster_and_sort_hits(hits, cluster_range=180):
         sorted_hits = pd.concat([sorted_hits, cluster])
 
     # Drop the added columns if not needed in the final output
-    # sorted_hits = sorted_hits.drop(columns=['x', 'y'])
+    
     return sorted_hits
 
 
@@ -284,13 +284,13 @@ for filename in os.listdir(templateDirectory):
     template_img = cv.imread(os.path.join(templateDirectory, filename))
     template_img = cv.cvtColor(template_img, cv.COLOR_BGR2GRAY)
     listTemplate.append((filename.split('.')[0], template_img))
-sheet = "sheets/Sample Sheet 17.png"
+sheet = "sheets/Sample Sheet 2.png"
 sheet_img = cv.imread(sheet)
 sheet_img = cv.cvtColor(sheet_img, cv.COLOR_BGR2GRAY)
 
 hits = matchTemplates(listTemplate,
                       sheet_img,
-                      score_threshold=0.93,
+                      score_threshold=0.925,
                       searchBox=(0, 0, sheet_img.shape[1], sheet_img.shape[0]),
                       method=cv.TM_CCOEFF_NORMED,
                       maxOverlap=0.3)
@@ -425,13 +425,20 @@ for i, cluster in enumerate(clusters):
 # Convert hex values to integers and store in a NumPy array
 int_values = sorted_hits['HexValue'].dropna().values
 int_array = np.array(int_values, dtype=int)
-#specify path for export
+
+# Drop the x and y column for better readability
+sorted_hits = sorted_hits.drop(columns=['x', 'y'])
+
+# Writing dataframe to a file because 
+# terminal does not display all of the data
+# as the table gets bigger
 path = r'outputs/output_data.txt'
 
 #export DataFrame to text file
 with open(path, 'w') as f:
     df_string = sorted_hits.to_string(header=True, index=True)
     f.write(df_string)
+
 print(sorted_hits)
 print("The number of matches post-processing:", len(sorted_hits))
 print("Corresponding hex values in decimal form: ", int_array)
