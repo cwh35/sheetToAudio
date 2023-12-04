@@ -1,23 +1,31 @@
-           TemplateName                 BBox     Score     x    y  Cluster  HexValue
-0            trebleclef    (86, 259, 34, 88)  0.999607    86  259        0       255
-1               sharp_a   (129, 247, 44, 87)  0.999999   129  247        0        10
-2      44_timesignature   (174, 258, 20, 60)  0.992472   174  258        0        68
-3              50_tempo   (182, 187, 43, 28)  0.973408   182  187        0        50
-4                 forte   (203, 316, 27, 30)  0.989230   203  316        0       512
-5      quarternote_lowa   (206, 252, 21, 71)  0.994186   206  252        0        82
-6      quarternote_lowb   (261, 266, 21, 73)  0.981065   261  266        0        98
-7   quarternote_middlec   (315, 263, 25, 70)  0.979940   315  263        0       114
-8     quarternote_highd   (371, 260, 27, 62)  0.997706   371  260        0       130
-9     quarternote_highe   (445, 258, 28, 58)  0.986344   445  258        0       146
-10    quarternote_highf   (499, 255, 23, 64)  0.969908   499  255        0       162
-11    quarternote_highg   (556, 251, 24, 71)  0.994555   556  251        0       178
-12    quarternote_higha   (613, 248, 31, 77)  0.998771   613  248        0       194
-13                piano   (680, 320, 25, 24)  0.937165   680  320        0       768
-14    quarternote_higha   (686, 248, 31, 77)  0.977156   686  248        0       194
-15    quarternote_highg   (740, 251, 24, 71)  0.988862   740  251        0       178
-16    quarternote_highf   (795, 255, 23, 64)  0.999986   795  255        0       162
-17    quarternote_highe   (852, 258, 28, 58)  0.990376   852  258        0       146
-18    quarternote_highd   (923, 260, 27, 62)  0.984357   923  260        0       130
-19  quarternote_middlec   (979, 263, 25, 70)  0.998985   979  263        0       114
-20     quarternote_lowb  (1036, 266, 21, 73)  0.992774  1036  266        0        98
-21     quarternote_lowa  (1093, 252, 21, 71)  0.965348  1093  252        0        82
+             TemplateName                 BBox     Score  Cluster  HexValue
+0              trebleclef    (84, 262, 34, 88)  0.999607        0       255
+1                 sharp_a   (127, 250, 44, 87)  1.000000        0        10
+2        44_timesignature   (172, 261, 20, 60)  0.992472        0        68
+3               180_tempo   (184, 190, 52, 27)  0.996137        0       180
+4                   forte   (201, 319, 27, 30)  0.989231        0       512
+5      sixteenthnote_lowg   (210, 258, 32, 58)  0.992502        0        64
+6   sixteenthnote_middlec   (238, 267, 20, 66)  0.959667        0       112
+7      sixteenthnote_lowf   (267, 260, 32, 53)  0.978661        0        48
+8   sixteenthnote_middlec   (295, 267, 20, 66)  0.998788        0       112
+9         eighthnote_lowa   (325, 255, 31, 66)  0.990949        0        81
+10        eighthnote_lowd   (358, 266, 30, 65)  0.997603        0        17
+11       quarternote_lowb   (384, 269, 21, 73)  0.999374        0        98
+12    quarternote_middlec   (426, 266, 25, 70)  0.998275        0       114
+13     sixteenthnote_lowf   (494, 260, 32, 53)  0.964222        0        48
+14    sixteenthnote_highg   (521, 255, 20, 66)  0.974784        0       176
+15    sixteenthnote_highe   (544, 260, 19, 55)  0.996774        0       144
+16    sixteenthnote_highd   (569, 264, 18, 60)  0.988711        0       128
+17       eighthnote_highe   (593, 261, 20, 55)  0.964014        0       145
+18        eighthnote_lowg   (628, 258, 31, 59)  0.990129        0        65
+19      quarternote_highf   (654, 258, 23, 64)  0.980154        0       162
+20      quarternote_highg   (698, 254, 24, 71)  0.992115        0       178
+21          halfnote_lowa   (760, 256, 22, 72)  0.948765        0        83
+22      quarternote_highc   (833, 246, 28, 89)  0.992351        0       226
+23      quarternote_highd   (873, 263, 27, 62)  0.989589        0       130
+24  sixteenthnote_middlec   (935, 267, 20, 66)  0.995856        0       112
+25    sixteenthnote_highg   (959, 255, 20, 66)  0.976074        0       176
+26  sixteenthnote_middlec   (982, 267, 20, 66)  0.955110        0       112
+27          sixteenthrest  (1005, 261, 23, 59)  0.996563        0         5
+28       quarternote_lowb  (1029, 269, 21, 73)  0.999295        0        98
+29          halfnote_lowa  (1073, 256, 22, 72)  0.954478        0        83

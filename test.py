@@ -284,7 +284,7 @@ for filename in os.listdir(templateDirectory):
     template_img = cv.imread(os.path.join(templateDirectory, filename))
     template_img = cv.cvtColor(template_img, cv.COLOR_BGR2GRAY)
     listTemplate.append((filename.split('.')[0], template_img))
-sheet = "sheets/4-A_Major Scale Sheet.png"
+sheet = "sheets/Sample Sheet 2.png"
 sheet_img = cv.imread(sheet)
 sheet_img = cv.cvtColor(sheet_img, cv.COLOR_BGR2GRAY)
 
@@ -426,6 +426,8 @@ for i, cluster in enumerate(clusters):
 int_values = sorted_hits['HexValue'].dropna().values
 int_array = np.array(int_values, dtype=int)
 
+# Drop the x and y column for better readability
+sorted_hits = sorted_hits.drop(columns=['x', 'y'])
 
 # Writing dataframe to a file because 
 # terminal does not display all of the data
@@ -436,9 +438,6 @@ path = r'outputs/output_data.txt'
 with open(path, 'w') as f:
     df_string = sorted_hits.to_string(header=True, index=True)
     f.write(df_string)
-
-# Drop the x and y column for better readability
-sorted_hits = sorted_hits.drop(columns=['x', 'y'])
 
 print(sorted_hits)
 print("The number of matches post-processing:", len(sorted_hits))
