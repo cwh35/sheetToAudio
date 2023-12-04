@@ -168,9 +168,9 @@ def get_beat_value(template_name, current_time_signature):
         # Whole rests represent a full measure, regardless of the time signature
         return current_time_signature
     elif 'eighthrest' in template_name or 'eighthnote' in template_name:
-        return 1/8  # Eighth rests are 1/8 beat
+        return .5  # Eighth notes and rests represent half a beat
     elif 'sixteenthrest' in template_name or 'sixteenthnote' in template_name:
-        return 1/16  # Sixteenth rests are 1/16 beat
+        return .25  # Sixteenth notes and rests represent a quarter of a beat
     else:
         return 0  # No beat value or not a note/rest
 
@@ -268,14 +268,14 @@ templateDirectory = "templates"
 sheetDirectory = "sheets"
 outputDirectory = "results"
 
-# img1 = cv.imread('sheets/Sample Sheet 12-1.png')
-# img2 = cv.imread('sheets/Sample Sheet 12-2.png')
+# img1 = cv.imread('sheets/Sample Sheet 16-1.png')
+# img2 = cv.imread('sheets/Sample Sheet 16-2.png')
 # #img3 = cv.imread('sheets/Sample Sheet 14-3.png')
 
 # img = cv.vconcat([img1, img2])
 # sheet_img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
-# cv.imwrite("sheets/Sample Sheet 12 Combined.png", sheet_img)
+# cv.imwrite("sheets/Sample Sheet 16 Combined.png", sheet_img)
 
 
 listTemplate = []
@@ -284,7 +284,7 @@ for filename in os.listdir(templateDirectory):
     template_img = cv.imread(os.path.join(templateDirectory, filename))
     template_img = cv.cvtColor(template_img, cv.COLOR_BGR2GRAY)
     listTemplate.append((filename.split('.')[0], template_img))
-sheet = "sheets/Sample Sheet 2.png"
+sheet = "sheets/Sample Sheet 15.png"
 sheet_img = cv.imread(sheet)
 sheet_img = cv.cvtColor(sheet_img, cv.COLOR_BGR2GRAY)
 

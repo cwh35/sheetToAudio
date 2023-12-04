@@ -1,0 +1,5 @@
+for 30 sheets tested, 28.7 (added percentages for templates in correct order) out of 30
+
+Sample Sheet 16 Combined: 100% templates identified
+100% templates in correct order
+Correct number of measures: yes
