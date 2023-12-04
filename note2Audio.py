@@ -58,7 +58,7 @@ vert=40
 #create LCD screen
 lcd=LCD()
 
-#strip=neopixel.NeoPixel(board.D18,30,brightness=1.0/20)
+strip=neopixel.NeoPixel(board.D18,horiz+vert,brightness=1.0/20)
 color=(255,192,0)
 coff=(0,0,0)
 
@@ -782,6 +782,8 @@ def playSong(song,measures,tempo_factor,instr):
     k=0
     lenSong=len(song)
     while (line<numLines and k<lenSong):
+        lnlght=int(line/numLines*vert)+horz
+        strip[lnlght]=(255,192,0)
         #determine number of spaces based on time sig and num measures
         tSig=(song[k+2]&0xF0)>>4
         m=measures[line]*4*(tSig)
@@ -790,12 +792,15 @@ def playSong(song,measures,tempo_factor,instr):
         #get lookup tables for frequencies and notes based on key sig
         freqs,noteNames=handleKeySignature(song[k+1])
         k=k+4
-        print(line)
+        
         #loop through line while not at end
         while (meas<m and k<lenSong):
+            lght=int(meas/m*horiz)
+            sB=statusByte
             #if dynamic, adjust volume
             if song[k]>0xFF:
-                vol=chr(48+((song[k]-0x100)>>2))
+                vol=chr(48+((song[k]-0x0100)>>8))
+                
                 k=k+1
             else:
                 note=song[k]&0x0F   #index value representing duration (quarter, whole, half,etc)
@@ -804,27 +809,27 @@ def playSong(song,measures,tempo_factor,instr):
                 else:
                     f=15
                     note=note%5
+                    sB='8'
                 d=durations[note]
                 mS=mStep[note]
                 if (note==4):
                     d=d*tSig/4.0
                     mS=mS*tSig/4.0
                     
-
-                srl.write((statusByte+freqs[f]+vol).encode())
-                #strip[measure]=(255,192,0)
+                srl.write((sB+freqs[f]+vol).encode())
+                strip[lght]=(255,192,0)
                 #strip[0]=color
                 lcd.text(noteNames[f],1)
                 lcd.text(notes[note],2)
                 time.sleep(d-waittime)
                 srl.write(b'800')
-                #strip[measure]=coff
+                strip[lght]=(0,0,0)
                 #strip[0]=coff
                 time.sleep(waittime)
                 meas=meas+mS
                 k = k + 1
         line = line + 1
-            
+        strip[lnlght]=(0,0,0)
             
 def main(args):
 	while 1:
