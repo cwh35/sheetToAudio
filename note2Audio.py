@@ -52,13 +52,13 @@ ads= ADS.ADS1115(i2c)
 #create single ended input for tempo and instrument and song selection
 selector=AnalogIn(ads,ADS.P0)
 
-horiz=32
+horiz=30
 vert=40
 
 #create LCD screen
 lcd=LCD()
 
-strip=neopixel.NeoPixel(board.D18,horiz+vert,brightness=1.0/20)
+strip=neopixel.NeoPixel(board.D12,horiz+2,brightness=1.0/20.0)
 color=(255,192,0)
 coff=(0,0,0)
 
@@ -171,8 +171,8 @@ def OpenMenu():
 		
 		if process == 1:
 			break
-		if sel==0:
-			return 0,0,0,0
+	if sel==0:
+		return 0,0,0,0
 	
 	instr=sel-1
 	
@@ -380,9 +380,9 @@ def processSong(song_name):
 			# Whole rests represent a full measure, regardless of the time signature
 			return current_time_signature
 		elif 'eighthrest' in template_name or 'eighthnote' in template_name:
-			return 1/8  # Eighth rests are 1/8 beat
+			return .5  # Eighth notes and rests are half a beat
 		elif 'sixteenthrest' in template_name or 'sixteenthnote' in template_name:
-			return 1/16  # Sixteenth rests are 1/16 beat
+			return .25  # Sixteenth notes and rests are a quarter of a beat
 		else:
 			return 0  # No beat value or not a note/rest
 
@@ -494,7 +494,7 @@ def processSong(song_name):
 
 	hits = matchTemplates(listTemplate,
 						  sheet_img,
-						  score_threshold=0.93,
+						  score_threshold=0.925,
 						  searchBox=(0, 0, sheet_img.shape[1], sheet_img.shape[0]),
 						  method=cv.TM_CCOEFF_NORMED,
 						  maxOverlap=0.3)
@@ -782,8 +782,8 @@ def playSong(song,measures,tempo_factor,instr):
     k=0
     lenSong=len(song)
     while (line<numLines and k<lenSong):
-        lnlght=int(line/numLines*vert)+horz
-        strip[lnlght]=(255,192,0)
+        #lnlght=int(line/9.0*vert+1)+horiz+1
+        #strip[lnlght]=(255,192,0)
         #determine number of spaces based on time sig and num measures
         tSig=(song[k+2]&0xF0)>>4
         m=measures[line]*4*(tSig)
@@ -795,7 +795,7 @@ def playSong(song,measures,tempo_factor,instr):
         
         #loop through line while not at end
         while (meas<m and k<lenSong):
-            lght=int(meas/m*horiz)
+            lght=int(meas/m*horiz+2)
             sB=statusByte
             #if dynamic, adjust volume
             if song[k]>0xFF:
@@ -816,23 +816,22 @@ def playSong(song,measures,tempo_factor,instr):
                     d=d*tSig/4.0
                     mS=mS*tSig/4.0
                     
+                strip[lght]=(255,192,0)    
                 srl.write((sB+freqs[f]+vol).encode())
-                strip[lght]=(255,192,0)
-                #strip[0]=color
                 lcd.text(noteNames[f],1)
                 lcd.text(notes[note],2)
                 time.sleep(d-waittime)
                 srl.write(b'800')
-                strip[lght]=(0,0,0)
-                #strip[0]=coff
                 time.sleep(waittime)
                 meas=meas+mS
                 k = k + 1
+                strip[lght]=(0,0,0)
         line = line + 1
-        strip[lnlght]=(0,0,0)
+        #strip[lnlght]=(0,0,0)
             
 def main(args):
 	while 1:
+		strip.fill(coff)
 		lcd.clear()
 		lcd.text("Push Process",1)
 		lcd.text("To Start",2)
@@ -865,7 +864,7 @@ def main(args):
 				time.sleep(0.5)
 			
 				playSong(song,measures,tempo_factor,instr)
-			
+				strip.fill(coff)
 				#ask to replay
 				lcd.clear()
 				lcd.text("Replay Song?",1)
