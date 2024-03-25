@@ -1,7 +1,0 @@
-CNN
-decision tree 
-adaboost 
-ensemble tree
-
-get sheet of music
-data augmentation - to create more data (more images)

@@ -1,6 +1,0 @@
-use template matching (openCV)
-
-- Low amount of data, less variability, no need for machine learning
-
-Design 1: Use template matching to correctly classify the different musical notes
-Design 2: Use HOG (histogram of gradients) and SVM (support vector machine) to correctly classify the musical notes
